@@ -6,7 +6,12 @@ import { BottomNav } from '@/components/dashboard/BottomNav';
 import { ToastContainer } from '@/components/dashboard/Toast';
 import { DashboardModule } from '@/components/dashboard/modules/Dashboard';
 import { ResumoModule } from '@/components/dashboard/modules/Resumo';
-import { ROIModule, CustosModule, InsightsModule, CompararFunisModule, ComparacaoModule, ExportarModule } from '@/components/dashboard/modules/OtherModules';
+import { ROIModule } from '@/components/dashboard/modules/ROI';
+import { CustosModule } from '@/components/dashboard/modules/Custos';
+import { InsightsModule } from '@/components/dashboard/modules/Insights';
+import { CompararFunisModule } from '@/components/dashboard/modules/CompararFunis';
+import { ExportarModule } from '@/components/dashboard/modules/Exportar';
+import { ComparacaoModule } from '@/components/dashboard/modules/OtherModules';
 
 const Index = () => {
   const {
@@ -79,7 +84,7 @@ const Index = () => {
             {currentModule === 'roi' && <ROIModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
             {currentModule === 'custos' && <CustosModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
             {currentModule === 'insights' && <InsightsModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
-            {currentModule === 'comparar-funis' && <CompararFunisModule />}
+            {currentModule === 'comparar-funis' && <CompararFunisModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
             {currentModule === 'comparacao' && <ComparacaoModule />}
             {currentModule === 'exportar' && <ExportarModule />}
           </>
