@@ -25,7 +25,20 @@ serve(async (req) => {
       throw new Error('GOOGLE_SERVICE_ACCOUNT não configurado');
     }
 
-    const credentials = JSON.parse(serviceAccountJson);
+    console.log('📝 Service account configurado, iniciando autenticação...');
+
+    let credentials;
+    try {
+      credentials = JSON.parse(serviceAccountJson);
+      
+      // Validar se tem as propriedades necessárias
+      if (!credentials.client_email || !credentials.private_key) {
+        throw new Error('Service account JSON inválido: faltam client_email ou private_key');
+      }
+    } catch (e) {
+      console.error('Erro ao parsear credentials:', e);
+      throw new Error('GOOGLE_SERVICE_ACCOUNT deve conter um JSON válido com todo o conteúdo do arquivo service account');
+    }
     
     // Obter access token usando JWT
     const jwtHeader = btoa(JSON.stringify({

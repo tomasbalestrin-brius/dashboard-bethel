@@ -52,6 +52,11 @@ export function Ranking({ allData }: RankingProps) {
     },
   ];
 
+  // Se não há dados suficientes, não renderizar
+  if (produtosRanking.length === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-[hsl(var(--bg-secondary))] rounded-2xl p-[30px] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
       <h2 className="text-[1.8rem] mb-[25px] text-center text-[hsl(var(--text-primary))]">
@@ -61,6 +66,9 @@ export function Ranking({ allData }: RankingProps) {
         {rankings.map(ranking => {
           const sorted = [...(produtosRanking as any[])].sort((a, b) => b[ranking.key] - a[ranking.key]);
           const winner = sorted[0];
+
+          // Validar se winner existe
+          if (!winner) return null;
 
           return (
             <div
