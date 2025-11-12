@@ -13,18 +13,18 @@ export function ROIModule({ allData, currentMonth, onMonthSelect }: ROIModulePro
 
   return (
     <div>
-      <div className="text-center mb-10 p-5">
-        <h1 className="text-[3.5rem] bg-gradient-to-r from-[hsl(var(--accent-primary))] to-[hsl(var(--accent-secondary))] bg-clip-text text-transparent mb-[15px] font-extrabold max-md:text-[1.8rem]">
-          💰 ANÁLISE DE LUCRO E ROAS
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Análise de Lucro e ROAS
         </h1>
-        <p className="text-xl text-[hsl(var(--text-secondary))] mb-2.5 max-md:text-sm">
+        <p className="text-muted-foreground">
           Lucro Absoluto e Retorno sobre Investimento
         </p>
       </div>
 
       <MonthSelector currentMonth={currentMonth} onMonthSelect={onMonthSelect} />
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5 mb-[30px] max-md:grid-cols-1 max-md:gap-[15px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {produtos.map(product => {
           const data = allData[product.id];
           if (!data) return null;
@@ -39,39 +39,45 @@ export function ROIModule({ allData, currentMonth, onMonthSelect }: ROIModulePro
           const roasFunil = totalInvestido > 0 ? (totalFaturamentoFunil / totalInvestido) : 0;
 
           return (
-            <div key={product.id} className="bg-[hsl(var(--bg-secondary))] p-[30px] rounded-2xl border-2 border-[hsl(var(--border-color))] transition-all duration-300 hover:border-[hsl(var(--accent-primary))] hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(59,130,246,0.3)] max-md:p-5">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="text-[2.5rem]">{product.icon}</div>
-                <div className="text-[1.1rem] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide max-md:text-base">
+            <div key={product.id} className="bg-card p-6 rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-2xl">
+                  {product.icon}
+                </div>
+                <div className="text-sm font-semibold text-foreground uppercase tracking-wide">
                   {product.name}
                 </div>
               </div>
 
-              <div className="mb-5">
-                <div className={`text-[2.5rem] font-bold mb-2.5 max-md:text-[2rem] ${lucroAbsoluto >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--danger))]'}`}>
-                  {lucroAbsoluto >= 0 ? '+' : ''}R$ {Math.abs(lucroAbsoluto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <div className="space-y-5">
+                <div>
+                  <div className={`text-3xl font-bold mb-1 ${lucroAbsoluto >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {lucroAbsoluto >= 0 ? '+' : ''}R$ {Math.abs(lucroAbsoluto).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Lucro / Prejuízo</div>
                 </div>
-                <div className="text-sm text-[hsl(var(--text-secondary))]">Lucro / Prejuízo</div>
-              </div>
 
-              <div className="mb-5">
-                <div className="text-[2rem] font-bold mb-2.5 text-[#60a5fa]">
-                  {roas.toFixed(2)}x
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xl font-bold text-blue-600 mb-1">
+                      {roas.toFixed(2)}x
+                    </div>
+                    <div className="text-xs text-muted-foreground">ROAS Tráfego</div>
+                  </div>
+
+                  <div>
+                    <div className="text-xl font-bold text-purple-600 mb-1">
+                      {roasFunil.toFixed(2)}x
+                    </div>
+                    <div className="text-xs text-muted-foreground">ROAS Funil</div>
+                  </div>
                 </div>
-                <div className="text-sm text-[hsl(var(--text-secondary))]">ROAS Tráfego</div>
-              </div>
 
-              <div className="mb-5">
-                <div className="text-[2rem] font-bold mb-2.5 text-[#a78bfa]">
-                  {roasFunil.toFixed(2)}x
-                </div>
-                <div className="text-sm text-[hsl(var(--text-secondary))]">ROAS Funil</div>
-              </div>
-
-              <div className="mt-5 pt-5 border-t border-[hsl(var(--border-color))]">
-                <div className="text-sm text-[hsl(var(--text-secondary))]">
-                  Investido: <strong>R$ {totalInvestido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong><br />
-                  Retorno: <strong>R$ {totalFaturamentoTrafego.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                <div className="pt-4 border-t border-border">
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>Investido: <span className="font-semibold text-foreground">R$ {totalInvestido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                    <div>Retorno: <span className="font-semibold text-foreground">R$ {totalFaturamentoTrafego.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                  </div>
                 </div>
               </div>
             </div>

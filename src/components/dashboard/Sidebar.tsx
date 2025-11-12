@@ -1,22 +1,23 @@
 import type { ModuleName } from '@/types/dashboard';
+import { LayoutDashboard, FileText, TrendingUp, DollarSign, Lightbulb, GitCompare, Calendar, Download } from 'lucide-react';
 
 interface SidebarProps {
   currentModule: ModuleName;
-  onModuleChange: (module: ModuleName) => void;
+  onModuleChange: (moduleId: ModuleName) => void;
   mobileMenuOpen: boolean;
   onCloseMobile: () => void;
 }
 
 export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onCloseMobile }: SidebarProps) {
-  const modules: Array<{ id: ModuleName; icon: string; label: string }> = [
-    { id: 'dashboard', icon: '🏠', label: 'Dashboard Principal' },
-    { id: 'resumo', icon: '📋', label: 'Resumo Geral' },
-    { id: 'comparar-funis', icon: '⚔️', label: 'Comparar Funis' },
-    { id: 'comparacao', icon: '📅', label: 'Comparar Meses' },
-    { id: 'roi', icon: '💰', label: 'Lucro e ROAS' },
-    { id: 'custos', icon: '📊', label: 'Custo por Lead' },
-    { id: 'insights', icon: '🤖', label: 'Insights Automáticos' },
-    { id: 'exportar', icon: '📥', label: 'Exportar' },
+  const modules = [
+    { id: 'dashboard' as ModuleName, icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'resumo' as ModuleName, icon: FileText, label: 'Resumo Geral' },
+    { id: 'roi' as ModuleName, icon: TrendingUp, label: 'Lucro e ROAS' },
+    { id: 'custos' as ModuleName, icon: DollarSign, label: 'Custo por Lead' },
+    { id: 'insights' as ModuleName, icon: Lightbulb, label: 'Insights' },
+    { id: 'comparar-funis' as ModuleName, icon: GitCompare, label: 'Comparar Funis' },
+    { id: 'comparacao' as ModuleName, icon: Calendar, label: 'Comparar Meses' },
+    { id: 'exportar' as ModuleName, icon: Download, label: 'Exportar' },
   ];
 
   const handleModuleClick = (moduleId: ModuleName) => {
@@ -25,30 +26,53 @@ export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onClose
   };
 
   return (
-    <div className={`
-      fixed left-0 top-0 h-screen w-20 bg-[hsl(var(--bg-secondary))] border-r-2 border-[hsl(var(--border-color))] flex flex-col items-center py-5 gap-[15px] z-[1000] shadow-[5px_0_20px_rgba(0,0,0,0.5)]
-      max-md:w-[280px] max-md:px-5 max-md:pt-20 max-md:transition-transform max-md:duration-300
-      ${mobileMenuOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full'}
-    `}>
-      {modules.map(module => (
-        <button
-          key={module.id}
-          onClick={() => handleModuleClick(module.id)}
-          className={`
-            w-[60px] h-[60px] border-none rounded-xl bg-[hsl(var(--bg-tertiary))] text-[hsl(var(--text-secondary))] text-2xl cursor-pointer transition-all duration-300 flex items-center justify-center relative hover:bg-[hsl(var(--bg-tertiary))] hover:text-[hsl(var(--text-primary))] hover:scale-110
-            ${currentModule === module.id ? 'bg-gradient-to-br from-[hsl(var(--accent-primary))] to-[hsl(var(--accent-secondary))] text-white scale-110 shadow-[0_5px_20px_rgba(59,130,246,0.4)]' : ''}
-            max-md:w-full max-md:h-[60px] max-md:flex-row max-md:justify-start max-md:gap-[15px] max-md:px-5 max-md:text-base
-          `}
-        >
-          <span className="max-md:text-[1.8rem]">{module.icon}</span>
-          <span className="hidden max-md:block text-[hsl(var(--text-primary))] text-base">
-            {module.label}
-          </span>
-          <span className="absolute left-[75px] bg-[hsl(var(--bg-secondary))] text-[hsl(var(--text-primary))] py-2 px-3 rounded-lg text-sm whitespace-nowrap opacity-0 pointer-events-none transition-opacity duration-300 border border-[hsl(var(--border-color))] z-[1001] group-hover:opacity-100 max-md:hidden">
-            {module.label}
-          </span>
-        </button>
-      ))}
-    </div>
+    <aside
+      className={`
+        fixed left-0 top-0 h-screen w-[240px] bg-card border-r border-border
+        flex flex-col transition-all duration-300 z-[1000]
+        max-md:${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}
+    >
+      {/* Logo */}
+      <div className="h-[76px] flex items-center px-6 border-b border-border">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
+            D
+          </div>
+          <div>
+            <div className="font-bold text-foreground">Dashboard</div>
+            <div className="text-xs text-muted-foreground">Analytics</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-6 px-3">
+        <div className="space-y-1">
+          {modules.map((module) => {
+            const Icon = module.icon;
+            const isActive = currentModule === module.id;
+            
+            return (
+              <button
+                key={module.id}
+                onClick={() => handleModuleClick(module.id)}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 rounded-lg
+                  text-sm font-medium transition-all duration-200
+                  ${isActive 
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  }
+                `}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span>{module.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </aside>
   );
 }

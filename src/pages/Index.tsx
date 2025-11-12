@@ -36,13 +36,13 @@ const Index = () => {
   } = useDashboardData();
 
   return (
-    <div className="min-h-screen p-[30px] px-5 max-md:pt-[60px] max-md:pb-[70px] max-md:px-2.5">
+    <div className="min-h-screen bg-secondary">
       <ThemeSelector currentTheme={theme} onThemeChange={changeTheme} />
       <MobileHeader currentModule={currentModule} onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
       
       {mobileMenuOpen && (
         <div
-          className="hidden max-md:block fixed inset-0 bg-black/70 z-[999] opacity-100 transition-opacity duration-300"
+          className="hidden max-md:block fixed inset-0 bg-black/50 z-[999] opacity-100 transition-opacity duration-300"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -57,38 +57,40 @@ const Index = () => {
       <BottomNav currentModule={currentModule} onModuleChange={selectModule} />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      <div className="ml-[100px] max-w-[1800px] mx-auto max-md:ml-0">
-        {loading ? (
-          <div className="text-center p-20 text-[hsl(var(--text-secondary))]">
-            <div className="text-5xl mb-4">⏳</div>
-            <div className="text-xl">Carregando dados...</div>
-          </div>
-        ) : (
-          <>
-            {currentModule === 'dashboard' && (
-              <DashboardModule
-                allData={allData}
-                currentMonth={currentMonth}
-                currentTeam={currentTeam}
-                currentProduct={currentProduct}
-                currentWeek={currentWeek}
-                onMonthSelect={selectMonth}
-                onTeamSelect={selectTeam}
-                onProductSelect={selectProduct}
-                onWeekChange={setCurrentWeek}
-              />
-            )}
-            {currentModule === 'resumo' && (
-              <ResumoModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />
-            )}
-            {currentModule === 'roi' && <ROIModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
-            {currentModule === 'custos' && <CustosModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
-            {currentModule === 'insights' && <InsightsModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
-            {currentModule === 'comparar-funis' && <CompararFunisModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
-            {currentModule === 'comparacao' && <ComparacaoModule />}
-            {currentModule === 'exportar' && <ExportarModule />}
-          </>
-        )}
+      <div className="ml-[240px] p-8 max-md:ml-0 max-md:pt-[76px] max-md:pb-[86px] max-md:px-4">
+        <div className="max-w-[1400px] mx-auto">
+          {loading ? (
+            <div className="text-center p-20">
+              <div className="text-5xl mb-4">⏳</div>
+              <div className="text-xl text-muted-foreground">Carregando dados...</div>
+            </div>
+          ) : (
+            <>
+              {currentModule === 'dashboard' && (
+                <DashboardModule
+                  allData={allData}
+                  currentMonth={currentMonth}
+                  currentTeam={currentTeam}
+                  currentProduct={currentProduct}
+                  currentWeek={currentWeek}
+                  onMonthSelect={selectMonth}
+                  onTeamSelect={selectTeam}
+                  onProductSelect={selectProduct}
+                  onWeekChange={setCurrentWeek}
+                />
+              )}
+              {currentModule === 'resumo' && (
+                <ResumoModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />
+              )}
+              {currentModule === 'roi' && <ROIModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
+              {currentModule === 'custos' && <CustosModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
+              {currentModule === 'insights' && <InsightsModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
+              {currentModule === 'comparar-funis' && <CompararFunisModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
+              {currentModule === 'comparacao' && <ComparacaoModule />}
+              {currentModule === 'exportar' && <ExportarModule />}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

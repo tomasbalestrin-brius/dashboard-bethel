@@ -1,4 +1,5 @@
 import type { ModuleName } from '@/types/dashboard';
+import { Menu } from 'lucide-react';
 
 interface MobileHeaderProps {
   currentModule: ModuleName;
@@ -18,17 +19,17 @@ export function MobileHeader({ currentModule, onMenuToggle }: MobileHeaderProps)
   };
 
   return (
-    <div className="hidden max-md:flex fixed top-0 left-0 right-0 h-[60px] bg-[hsl(var(--bg-primary))] border-b-2 border-[hsl(var(--border-color))] z-[1000] items-center justify-between px-5">
+    <div className="hidden max-md:flex fixed top-0 left-0 right-0 h-[60px] bg-card border-b border-border z-[1000] items-center justify-between px-4 shadow-sm">
       <button
         onClick={onMenuToggle}
-        className="w-[45px] h-[45px] bg-transparent border-none text-[hsl(var(--text-primary))] text-2xl cursor-pointer flex items-center justify-center rounded-lg transition-all duration-300 active:bg-[rgba(59,130,246,0.2)]"
+        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors"
       >
-        ☰
+        <Menu className="w-5 h-5 text-foreground" />
       </button>
-      <div className="text-[1.1rem] font-bold text-[hsl(var(--text-primary))] max-[480px]:text-base">
+      <div className="text-sm font-semibold text-foreground">
         {titles[currentModule]}
       </div>
-      <div className="w-[45px]"></div>
+      <div className="w-10"></div>
     </div>
   );
 }
