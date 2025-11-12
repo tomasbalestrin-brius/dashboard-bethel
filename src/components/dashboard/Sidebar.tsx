@@ -1,5 +1,7 @@
 import type { ModuleName } from '@/types/dashboard';
-import { LayoutDashboard, FileText, TrendingUp, DollarSign, Lightbulb, GitCompare, Calendar, Download } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { LayoutDashboard, FileText, TrendingUp, DollarSign, Lightbulb, GitCompare, Calendar, Download, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   currentModule: ModuleName;
@@ -9,7 +11,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onCloseMobile }: SidebarProps) {
-  const modules = [
+  const { currentUser, logout, hasPermission } = useAuth();
+
+  const allModules = [
     { id: 'dashboard' as ModuleName, icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'resumo' as ModuleName, icon: FileText, label: 'Resumo Geral' },
     { id: 'roi' as ModuleName, icon: TrendingUp, label: 'Lucro e ROAS' },
@@ -19,6 +23,14 @@ export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onClose
     { id: 'comparacao' as ModuleName, icon: Calendar, label: 'Comparar Meses' },
     { id: 'exportar' as ModuleName, icon: Download, label: 'Exportar' },
   ];
+
+  // Filtrar módulos baseado em permissões
+  const modules = allModules.filter(module => {
+    if (module.id === 'exportar') {
+      return hasPermission('all') || hasPermission('export');
+    }
+    return true;
+  });
 
   const handleModuleClick = (moduleId: ModuleName) => {
     onModuleChange(moduleId);
@@ -73,6 +85,30 @@ export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onClose
           })}
         </div>
       </nav>
+
+      {/* User Info - Mobile Only */}
+      <div className="p-4 border-t border-border hidden max-md:block">
+        <div className="bg-secondary rounded-lg p-3 mb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
+              {currentUser?.name.charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-foreground truncate">{currentUser?.name}</div>
+              <div className="text-xs text-muted-foreground truncate">{currentUser?.email}</div>
+            </div>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={logout}
+          className="w-full gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Sair
+        </Button>
+      </div>
     </aside>
   );
 }

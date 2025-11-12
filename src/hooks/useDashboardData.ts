@@ -48,7 +48,7 @@ export function useDashboardData() {
   const [currentProduct, setCurrentProduct] = useState<string>('Geral');
   const [currentWeek, setCurrentWeek] = useState<string>('total');
   const [currentModule, setCurrentModule] = useState<ModuleName>('dashboard');
-  const [theme, setTheme] = useState<ThemeName>('dark');
+  const [theme, setTheme] = useState<ThemeName>('light');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
