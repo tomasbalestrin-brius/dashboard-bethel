@@ -43,6 +43,23 @@ const Index = () => {
     <div className="min-h-screen bg-secondary">
       {/* User Info and Logout */}
       <div className="fixed top-4 right-4 z-[1001] flex items-center gap-3 max-md:hidden">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            // Limpar cache
+            Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('dashboard_cache_')) {
+                localStorage.removeItem(key);
+              }
+            });
+            window.location.reload();
+          }}
+          className="h-8 gap-2"
+          title="Atualizar dados da planilha"
+        >
+          🔄 Atualizar
+        </Button>
         <div className="bg-card border border-border rounded-lg px-4 py-2 flex items-center gap-3 shadow-sm">
           <User className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">{currentUser?.name}</span>

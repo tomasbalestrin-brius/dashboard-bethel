@@ -1,1 +1,4 @@
 project_id = "sojdulhdmbgvdyvmxucn"
+
+[functions.fetch-sheets-data]
+verify_jwt = false

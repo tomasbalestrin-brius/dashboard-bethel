@@ -91,57 +91,105 @@ export function useDashboardData() {
       const month = MONTHS.find(m => m.id === currentMonth);
       if (!month) return;
 
-      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${month.gid}`;
-      const response = await fetch(url);
-      const csvText = await response.text();
-
-      Papa.parse(csvText, {
-        complete: function (results: any) {
-          const newData: AllData = {};
-          const productRanges: Record<string, { start: number; end: number; tendencia: number }> = {
-            'Geral': { start: 1, end: 4, tendencia: 5 },
-            '50 Scripts': { start: 22, end: 25, tendencia: 26 },
-            'Teste': { start: 29, end: 32, tendencia: 33 },
-            'IA Julia': { start: 36, end: 39, tendencia: 40 },
-            'MPM': { start: 43, end: 45, tendencia: 46 },
-            'Couply': { start: 8, end: 11, tendencia: 12 },
-            'Autentiq': { start: 15, end: 18, tendencia: 19 },
-            'Mentoria Julia': { start: 50, end: 53, tendencia: 54 },
-            'Social Selling CL': { start: 57, end: 60, tendencia: 61 },
-            'Social Selling JU': { start: 64, end: 67, tendencia: 68 },
-          };
-
-          for (const [productName, range] of Object.entries(productRanges)) {
-            const semanas = [];
-            for (let i = range.start; i <= range.end; i++) {
-              const row = results.data[i];
-              if (!row) continue;
-              const rowData = parseRow(row);
-              semanas.push(rowData);
-            }
-
-            const tendenciaRow = results.data[range.tendencia];
-            let tendencia = null;
-            if (tendenciaRow) {
-              tendencia = parseRow(tendenciaRow);
-              if (tendencia.lucroFunil === 0 && tendencia.faturamentoFunil > 0) {
-                tendencia.lucroFunil = tendencia.faturamentoFunil - tendencia.investido;
-              }
-            }
-
-            newData[productName] = { semanas, tendencia };
+      // Verificar cache primeiro (5 minutos)
+      const cacheKey = `dashboard_cache_${currentMonth}`;
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (cached) {
+        try {
+          const { data: cachedData, timestamp } = JSON.parse(cached);
+          const cacheAge = Date.now() - timestamp;
+          const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+          
+          if (cacheAge < CACHE_DURATION) {
+            console.log('📦 Usando dados do cache');
+            parseAndSetData(cachedData);
+            setLoading(false);
+            return;
           }
+        } catch (e) {
+          console.warn('Cache inválido, buscando dados novos');
+        }
+      }
 
-          setAllData(newData);
-          setLoading(false);
+      // Buscar dados via Google Sheets API
+      console.log('🔄 Buscando dados da API...');
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-sheets-data`;
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          sheetName: month.name,
+          range: 'A1:Q100'
+        }),
       });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erro ao buscar dados');
+      }
+
+      console.log(`✅ Dados recebidos: ${result.data.length} linhas`);
+
+      // Salvar em cache
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: result.data,
+        timestamp: Date.now()
+      }));
+
+      parseAndSetData(result.data);
+      setLoading(false);
+      
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('❌ Erro ao carregar dados:', error);
       showToast('Erro ao carregar dados. Tente novamente.', 'error');
       setLoading(false);
     }
   }, [currentMonth, showToast]);
+
+  // Função auxiliar para processar dados
+  const parseAndSetData = useCallback((data: any[][]) => {
+    const newData: AllData = {};
+    const productRanges: Record<string, { start: number; end: number; tendencia: number }> = {
+      'Geral': { start: 1, end: 4, tendencia: 5 },
+      '50 Scripts': { start: 22, end: 25, tendencia: 26 },
+      'Teste': { start: 29, end: 32, tendencia: 33 },
+      'IA Julia': { start: 36, end: 39, tendencia: 40 },
+      'MPM': { start: 43, end: 45, tendencia: 46 },
+      'Couply': { start: 8, end: 11, tendencia: 12 },
+      'Autentiq': { start: 15, end: 18, tendencia: 19 },
+      'Mentoria Julia': { start: 50, end: 53, tendencia: 54 },
+      'Social Selling CL': { start: 57, end: 60, tendencia: 61 },
+      'Social Selling JU': { start: 64, end: 67, tendencia: 68 },
+    };
+
+    for (const [productName, range] of Object.entries(productRanges)) {
+      const semanas = [];
+      for (let i = range.start; i <= range.end; i++) {
+        const row = data[i];
+        if (!row) continue;
+        const rowData = parseRow(row);
+        semanas.push(rowData);
+      }
+
+      const tendenciaRow = data[range.tendencia];
+      let tendencia = null;
+      if (tendenciaRow) {
+        tendencia = parseRow(tendenciaRow);
+        if (tendencia.lucroFunil === 0 && tendencia.faturamentoFunil > 0) {
+          tendencia.lucroFunil = tendencia.faturamentoFunil - tendencia.investido;
+        }
+      }
+
+      newData[productName] = { semanas, tendencia };
+    }
+
+    setAllData(newData);
+  }, []);
 
   useEffect(() => {
     loadData();
