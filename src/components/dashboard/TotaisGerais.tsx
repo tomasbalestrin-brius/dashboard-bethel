@@ -1,4 +1,4 @@
-import { AllData } from '@/types/dashboard';
+import { ProductData } from '@/types/dashboard';
 
 interface TotaisGerais {
   faturamentoTotal: number;
@@ -8,28 +8,30 @@ interface TotaisGerais {
 }
 
 interface TotaisGeraisProps {
-  allData: AllData;
+  productData: ProductData | undefined;
+  productName: string;
 }
 
-function calcularTotaisGerais(allData: AllData): TotaisGerais {
+function calcularTotaisGerais(productData: ProductData | undefined): TotaisGerais {
+  if (!productData) {
+    return {
+      faturamentoTotal: 0,
+      faturamentoTendencia: 0,
+      lucroTotal: 0,
+      lucroTendencia: 0
+    };
+  }
+
   let faturamentoTotal = 0;
-  let faturamentoTendencia = 0;
   let lucroTotal = 0;
-  let lucroTendencia = 0;
 
-  Object.values(allData).forEach(productData => {
-    if (!productData) return;
-    
-    productData.semanas.forEach(semana => {
-      faturamentoTotal += semana.faturamentoFunil;
-      lucroTotal += semana.lucroFunil;
-    });
-
-    if (productData.tendencia) {
-      faturamentoTendencia += productData.tendencia.faturamentoFunil;
-      lucroTendencia += productData.tendencia.lucroFunil;
-    }
+  productData.semanas.forEach(semana => {
+    faturamentoTotal += semana.faturamentoFunil;
+    lucroTotal += semana.lucroFunil;
   });
+
+  const faturamentoTendencia = productData.tendencia?.faturamentoFunil || 0;
+  const lucroTendencia = productData.tendencia?.lucroFunil || 0;
 
   return {
     faturamentoTotal,
@@ -39,8 +41,8 @@ function calcularTotaisGerais(allData: AllData): TotaisGerais {
   };
 }
 
-export function TotaisGerais({ allData }: TotaisGeraisProps) {
-  const totais = calcularTotaisGerais(allData);
+export function TotaisGerais({ productData, productName }: TotaisGeraisProps) {
+  const totais = calcularTotaisGerais(productData);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -53,7 +55,7 @@ export function TotaisGerais({ allData }: TotaisGeraisProps) {
   return (
     <div className="w-full mt-8 mb-8">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-foreground">
-        💰 TOTAIS GERAIS
+        💰 TOTAIS - {productName}
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -63,7 +65,7 @@ export function TotaisGerais({ allData }: TotaisGeraisProps) {
             <h3 className="text-sm font-semibold opacity-90">Faturamento Total</h3>
           </div>
           <p className="text-3xl font-bold">{formatCurrency(totais.faturamentoTotal)}</p>
-          <p className="text-xs mt-2 opacity-80">(Soma de todas as semanas)</p>
+          <p className="text-xs mt-2 opacity-80">(Soma das 4 semanas)</p>
         </div>
 
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white shadow-lg">
@@ -81,7 +83,7 @@ export function TotaisGerais({ allData }: TotaisGeraisProps) {
             <h3 className="text-sm font-semibold opacity-90">Lucro Total</h3>
           </div>
           <p className="text-3xl font-bold">{formatCurrency(totais.lucroTotal)}</p>
-          <p className="text-xs mt-2 opacity-80">(Soma de todas as semanas)</p>
+          <p className="text-xs mt-2 opacity-80">(Soma das 4 semanas)</p>
         </div>
 
         <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg p-6 text-white shadow-lg">
