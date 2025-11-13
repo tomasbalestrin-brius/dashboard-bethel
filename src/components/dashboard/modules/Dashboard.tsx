@@ -4,6 +4,7 @@ import { ProductSelector } from '../ProductSelector';
 import { Funnel } from '../Funnel';
 import { StatsPanel } from '../StatsPanel';
 import { Ranking } from '../Ranking';
+import { TotaisGerais } from '../TotaisGerais';
 import type { AllData } from '@/types/dashboard';
 
 interface DashboardModuleProps {
@@ -110,6 +111,8 @@ export function DashboardModule({
       </div>
 
       <Ranking allData={allData} />
+
+      <TotaisGerais allData={allData} />
     </div>
   );
 }
