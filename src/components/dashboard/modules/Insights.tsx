@@ -91,43 +91,96 @@ export function InsightsModule({ allData, currentMonth, onMonthSelect }: Insight
     description: 'Baseado nos dados, recomendamos focar os esforços em produtos com ROI positivo e melhorar a taxa de agendamento dos produtos que estão com performance abaixo da média. Considere redistribuir o investimento para maximizar o retorno.',
   });
 
+  const getInsightStyle = (type: string) => {
+    switch (type) {
+      case 'danger':
+        return {
+          gradient: 'from-red-500/10 to-rose-600/10',
+          border: 'border-red-500',
+          iconBg: 'from-red-500 to-rose-600',
+          shadow: 'shadow-red-500/50',
+          badge: 'bg-red-500/20 text-red-400',
+          badgeText: 'URGENTE',
+        };
+      case 'success':
+        return {
+          gradient: 'from-green-500/10 to-emerald-600/10',
+          border: 'border-green-500',
+          iconBg: 'from-green-500 to-emerald-600',
+          shadow: 'shadow-green-500/50',
+          badge: 'bg-green-500/20 text-green-400',
+          badgeText: 'TOP',
+        };
+      case 'warning':
+        return {
+          gradient: 'from-yellow-500/10 to-amber-600/10',
+          border: 'border-yellow-500',
+          iconBg: 'from-yellow-500 to-amber-600',
+          shadow: 'shadow-yellow-500/50',
+          badge: 'bg-yellow-500/20 text-yellow-400',
+          badgeText: 'ATENÇÃO',
+        };
+      default:
+        return {
+          gradient: 'from-purple-500/10 to-violet-600/10',
+          border: 'border-purple-500',
+          iconBg: 'from-purple-500 to-violet-600',
+          shadow: 'shadow-purple-500/50',
+          badge: 'bg-purple-500/20 text-purple-400',
+          badgeText: 'DICA',
+        };
+    }
+  };
+
   return (
-    <div>
-      <div className="text-center mb-10 p-5">
-        <h1 className="text-[3.5rem] bg-gradient-to-r from-[hsl(var(--accent-primary))] to-[hsl(var(--accent-secondary))] bg-clip-text text-transparent mb-[15px] font-extrabold max-md:text-[1.8rem]">
-          🤖 INSIGHTS AUTOMÁTICOS
+    <div className="p-6 max-md:p-4">
+      <div className="mb-8 text-center animate-fade-in-up">
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[hsl(var(--accent-primary))] to-[hsl(var(--accent-secondary))] bg-clip-text text-transparent mb-2 max-md:text-2xl">
+          💡 INSIGHTS AUTOMÁTICOS
         </h1>
-        <p className="text-xl text-[hsl(var(--text-secondary))] mb-2.5 max-md:text-sm">
-          Análise Inteligente dos Dados
+        <p className="text-[hsl(var(--text-secondary))] text-lg max-md:text-sm">
+          Análise inteligente dos seus funis e recomendações estratégicas
         </p>
       </div>
 
       <MonthSelector currentMonth={currentMonth} onMonthSelect={onMonthSelect} />
 
-      <div className="flex flex-col gap-5 max-md:gap-[15px]">
-        {insights.map((insight, index) => (
-          <div
-            key={index}
-            className={`
-              bg-[hsl(var(--bg-secondary))] p-[25px] rounded-xl border-l-4 flex gap-5 items-start transition-all duration-300 hover:translate-x-1 hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]
-              ${insight.type === 'success' ? 'border-[hsl(var(--success))]' : ''}
-              ${insight.type === 'warning' ? 'border-[hsl(var(--warning))]' : ''}
-              ${insight.type === 'danger' ? 'border-[hsl(var(--danger))]' : ''}
-              max-md:flex-col max-md:p-5 max-md:text-center
-            `}
-          >
-            <div className="text-[2rem] min-w-[50px] text-center">{insight.icon}</div>
-            <div className="flex-1">
-              <div className="text-xl font-bold text-[hsl(var(--text-primary))] mb-2">
-                {insight.title}
+      <div className="grid gap-6 max-w-5xl mx-auto max-md:gap-4">
+        {insights.map((insight, index) => {
+          const style = getInsightStyle(insight.type);
+          return (
+            <div
+              key={index}
+              className={`relative group animate-fade-in-up delay-${Math.min(index + 1, 7)}`}
+            >
+              {/* Glow effect */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} blur-2xl group-hover:blur-3xl transition-all opacity-50`}></div>
+              
+              {/* Card */}
+              <div className={`relative backdrop-blur-xl bg-slate-800/70 border-l-4 ${style.border} rounded-xl p-6 hover:scale-[1.02] transition-all max-md:p-4`}>
+                <div className="flex items-start gap-4 max-md:gap-3">
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${style.iconBg} flex items-center justify-center shadow-xl ${style.shadow} ${insight.type === 'danger' ? 'animate-pulse-slow' : ''} flex-shrink-0`}>
+                    <span className="text-3xl">{insight.icon}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h3 className="text-lg font-bold text-slate-100 max-md:text-base">
+                        {insight.title}
+                      </h3>
+                      <span className={`px-2 py-1 ${style.badge} text-xs font-bold rounded-lg ${insight.type === 'danger' ? 'animate-pulse-slow' : ''}`}>
+                        {style.badgeText}
+                      </span>
+                    </div>
+                    <p
+                      className="text-slate-300 leading-relaxed max-md:text-sm"
+                      dangerouslySetInnerHTML={{ __html: insight.description }}
+                    />
+                  </div>
+                </div>
               </div>
-              <div
-                className="text-base text-[hsl(var(--text-secondary))] leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: insight.description }}
-              />
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

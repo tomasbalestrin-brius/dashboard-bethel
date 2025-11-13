@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { MonthSelector } from '../MonthSelector';
 import { ALL_PRODUCTS } from '@/hooks/useDashboardData';
 import type { AllData } from '@/types/dashboard';
@@ -42,6 +43,18 @@ export function CompararFunisModule({ allData, currentMonth, onMonthSelect }: Co
   const product2 = productOptions.find(p => p.id === funil2)!;
 
   const winner = totals1.faturado > totals2.faturado ? 1 : 2;
+
+  // Trigger confetti when winner is determined
+  useEffect(() => {
+    if (totals1 && totals2) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#34d399', '#6ee7b7']
+      });
+    }
+  }, [winner]);
 
   const metrics = [
     { label: '💰 Faturamento', key: 'faturado' as const, format: (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
@@ -106,16 +119,24 @@ export function CompararFunisModule({ allData, currentMonth, onMonthSelect }: Co
 
       <div className="grid grid-cols-2 gap-5 mb-[30px] max-md:grid-cols-1 max-md:gap-[30px]">
         {/* Funil 1 */}
-        <div className={`bg-[hsl(var(--bg-secondary))] rounded-2xl p-[25px] border-2 border-[hsl(var(--border-color))] ${winner === 1 ? 'border-[hsl(var(--success))] shadow-[0_0_30px_rgba(16,185,129,0.3)]' : ''} max-md:p-5`}>
+        <div className={`relative bg-[hsl(var(--bg-secondary))] rounded-2xl p-[25px] border-4 transition-all duration-300 animate-fade-in-up delay-1 max-md:p-5 ${winner === 1 ? 'border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.5)]' : 'border-[hsl(var(--border-color))]'}`}>
+          {winner === 1 && (
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500 blur-xl animate-pulse-slow"></div>
+                <div className="relative px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-2xl shadow-green-500/50 animate-bounce-gentle">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🏆</span>
+                    <span className="text-sm font-black text-white uppercase tracking-wider">Vencedor</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="text-center mb-[25px] pb-5 border-b-2 border-[hsl(var(--border-color))]">
             <div className="text-[1.8rem] font-extrabold text-[hsl(var(--text-primary))] mb-1.5">
               {product1.icon} {product1.name}
             </div>
-            {winner === 1 && (
-              <div className="inline-block bg-gradient-to-r from-[hsl(var(--success))] to-[#059669] text-white py-2 px-5 rounded-[20px] text-sm font-bold mt-2.5">
-                🏆 VENCEDOR
-              </div>
-            )}
           </div>
 
           <div className="flex flex-col gap-[15px]">
@@ -133,16 +154,24 @@ export function CompararFunisModule({ allData, currentMonth, onMonthSelect }: Co
         </div>
 
         {/* Funil 2 */}
-        <div className={`bg-[hsl(var(--bg-secondary))] rounded-2xl p-[25px] border-2 border-[hsl(var(--border-color))] ${winner === 2 ? 'border-[hsl(var(--success))] shadow-[0_0_30px_rgba(16,185,129,0.3)]' : ''} max-md:p-5`}>
+        <div className={`relative bg-[hsl(var(--bg-secondary))] rounded-2xl p-[25px] border-4 transition-all duration-300 animate-fade-in-up delay-2 max-md:p-5 ${winner === 2 ? 'border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.5)]' : 'border-[hsl(var(--border-color))]'}`}>
+          {winner === 2 && (
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500 blur-xl animate-pulse-slow"></div>
+                <div className="relative px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-2xl shadow-green-500/50 animate-bounce-gentle">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🏆</span>
+                    <span className="text-sm font-black text-white uppercase tracking-wider">Vencedor</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="text-center mb-[25px] pb-5 border-b-2 border-[hsl(var(--border-color))]">
             <div className="text-[1.8rem] font-extrabold text-[hsl(var(--text-primary))] mb-1.5">
               {product2.icon} {product2.name}
             </div>
-            {winner === 2 && (
-              <div className="inline-block bg-gradient-to-r from-[hsl(var(--success))] to-[#059669] text-white py-2 px-5 rounded-[20px] text-sm font-bold mt-2.5">
-                🏆 VENCEDOR
-              </div>
-            )}
           </div>
 
           <div className="flex flex-col gap-[15px]">
