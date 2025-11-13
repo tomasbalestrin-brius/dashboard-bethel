@@ -1,21 +1,32 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/auth/LoadingButton';
+import { PasswordStrength } from '@/components/auth/PasswordStrength';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
 
 export default function Register() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
+  
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+  });
+  
+  const password = watch('password', '');
 
   // Redirect if already logged in
   useEffect(() => {
@@ -24,26 +35,10 @@ export default function Register() {
     }
   }, [user, navigate]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
-    // Validations
-    if (!email || !password) {
-      return;
-    }
-
-    if (password.length < 6) {
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      return;
-    }
-
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
-
     try {
-      await signUp(email, password, fullName ? { full_name: fullName } : undefined);
+      await signUp(data.email, data.password, data.fullName ? { full_name: data.fullName } : undefined);
       navigate('/login');
     } catch (error) {
       // Error is handled by the signUp function with toast
@@ -66,7 +61,7 @@ export default function Register() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="fullName" className="text-sm font-semibold text-slate-300">
                 Nome completo (opcional)
@@ -74,12 +69,14 @@ export default function Register() {
               <Input
                 id="fullName"
                 type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
                 placeholder="Seu nome"
                 autoComplete="name"
                 className="h-12 bg-slate-900/50 border-slate-700 focus:ring-purple-500 focus:border-purple-500"
+                {...register('fullName')}
               />
+              {errors.fullName && (
+                <p className="text-sm text-red-400 mt-1">{errors.fullName.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -89,13 +86,14 @@ export default function Register() {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                required
                 autoComplete="email"
                 className="h-12 bg-slate-900/50 border-slate-700 focus:ring-purple-500 focus:border-purple-500"
+                {...register('email')}
               />
+              {errors.email && (
+                <p className="text-sm text-red-400 mt-1">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -106,12 +104,10 @@ export default function Register() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
                   autoComplete="new-password"
                   className="h-12 pr-12 bg-slate-900/50 border-slate-700 focus:ring-purple-500 focus:border-purple-500"
+                  {...register('password')}
                 />
                 <button
                   type="button"
@@ -121,9 +117,10 @@ export default function Register() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {password && password.length < 6 && (
-                <p className="text-xs text-amber-400">Senha deve ter no mínimo 6 caracteres</p>
+              {errors.password && (
+                <p className="text-sm text-red-400 mt-1">{errors.password.message}</p>
               )}
+              <PasswordStrength password={password} />
             </div>
 
             <div className="space-y-2">
@@ -134,12 +131,10 @@ export default function Register() {
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
                   autoComplete="new-password"
                   className="h-12 pr-12 bg-slate-900/50 border-slate-700 focus:ring-purple-500 focus:border-purple-500"
+                  {...register('confirmPassword')}
                 />
                 <button
                   type="button"
@@ -149,25 +144,18 @@ export default function Register() {
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {confirmPassword && password !== confirmPassword && (
-                <p className="text-xs text-red-400">As senhas não coincidem</p>
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-400 mt-1">{errors.confirmPassword.message}</p>
               )}
             </div>
 
-            <Button
+            <LoadingButton
               type="submit"
-              disabled={isLoading || password !== confirmPassword || password.length < 6}
-              className="w-full h-12 text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={isLoading}
+              className="w-full h-12 text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Cadastrando...
-                </span>
-              ) : (
-                'Cadastrar'
-              )}
-            </Button>
+              Criar conta
+            </LoadingButton>
           </form>
 
           {/* Footer */}

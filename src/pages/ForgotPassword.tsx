@@ -1,28 +1,34 @@
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/auth/LoadingButton';
 import { ArrowLeft } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/lib/validations/auth';
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   
   const { resetPassword } = useAuth();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || cooldown > 0) {
-      return;
-    }
+  const onSubmit = async (data: ForgotPasswordFormData) => {
+    if (cooldown > 0) return;
 
     setIsLoading(true);
 
     try {
-      await resetPassword(email);
+      await resetPassword(data.email);
       
       // Start 60 second cooldown
       setCooldown(60);
@@ -56,7 +62,7 @@ export default function ForgotPassword() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-semibold text-slate-300">
                 Email
@@ -64,31 +70,24 @@ export default function ForgotPassword() {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                required
                 autoComplete="email"
                 className="h-12 bg-slate-900/50 border-slate-700 focus:ring-purple-500 focus:border-purple-500"
+                {...register('email')}
               />
+              {errors.email && (
+                <p className="text-sm text-red-400 mt-1">{errors.email.message}</p>
+              )}
             </div>
 
-            <Button
+            <LoadingButton
               type="submit"
-              disabled={isLoading || cooldown > 0}
-              className="w-full h-12 text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={isLoading}
+              disabled={cooldown > 0}
+              className="w-full h-12 text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Enviando...
-                </span>
-              ) : cooldown > 0 ? (
-                `Aguarde ${cooldown}s para reenviar`
-              ) : (
-                'Enviar instruções'
-              )}
-            </Button>
+              {cooldown > 0 ? `Aguarde ${cooldown}s para reenviar` : 'Enviar instruções'}
+            </LoadingButton>
           </form>
 
           {/* Footer */}
