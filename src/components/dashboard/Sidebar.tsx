@@ -11,9 +11,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onCloseMobile }: SidebarProps) {
-  const { currentUser, logout, hasPermission } = useAuth();
+  const { user, signOut } = useAuth();
 
-  const allModules = [
+  const modules = [
     { id: 'dashboard' as ModuleName, icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'resumo' as ModuleName, icon: FileText, label: 'Resumo Geral' },
     { id: 'roi' as ModuleName, icon: TrendingUp, label: 'Lucro e ROAS' },
@@ -23,14 +23,6 @@ export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onClose
     { id: 'comparacao' as ModuleName, icon: Calendar, label: 'Comparar Meses' },
     { id: 'exportar' as ModuleName, icon: Download, label: 'Exportar' },
   ];
-
-  // Filtrar módulos baseado em permissões
-  const modules = allModules.filter(module => {
-    if (module.id === 'exportar') {
-      return hasPermission('all') || hasPermission('export');
-    }
-    return true;
-  });
 
   const handleModuleClick = (moduleId: ModuleName) => {
     onModuleChange(moduleId);
@@ -91,18 +83,20 @@ export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onClose
         <div className="bg-secondary rounded-lg p-3 mb-3">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
-              {currentUser?.name.charAt(0)}
+              {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-foreground truncate">{currentUser?.name}</div>
-              <div className="text-xs text-muted-foreground truncate">{currentUser?.email}</div>
+              <div className="text-sm font-medium text-foreground truncate">
+                {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+              </div>
+              <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
             </div>
           </div>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={logout}
+          onClick={signOut}
           className="w-full gap-2"
         >
           <LogOut className="w-4 h-4" />

@@ -3,20 +3,20 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { currentUser, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">⏳</div>
-          <div className="text-xl text-muted-foreground">Carregando...</div>
+          <div className="w-16 h-16 mx-auto mb-4 border-4 border-purple-500 border-t-pink-500 rounded-full animate-spin"></div>
+          <div className="text-xl text-slate-400">Carregando...</div>
         </div>
       </div>
     );
   }
 
-  if (!currentUser) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

@@ -1,78 +1,172 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Session, USERS } from '@/types/auth';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
-  currentUser: Omit<User, 'password'> | null;
-  login: (email: string, password: string, remember: boolean) => { success: boolean; message?: string };
-  logout: () => void;
-  hasPermission: (permission: string) => boolean;
-  isLoading: boolean;
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signUp: (email: string, password: string, metadata?: { full_name?: string }) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updateProfile: (data: { full_name?: string; avatar_url?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<Omit<User, 'password'> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Verificar sessão existente
-    const savedSession = localStorage.getItem('dashboard_session') || sessionStorage.getItem('dashboard_session');
-    if (savedSession) {
-      try {
-        const session: Session = JSON.parse(savedSession);
-        // Verificar se sessão não expirou (24h)
-        const expiryTime = 24 * 60 * 60 * 1000;
-        if (Date.now() - session.timestamp < expiryTime) {
-          setCurrentUser(session.user);
-        } else {
-          localStorage.removeItem('dashboard_session');
-          sessionStorage.removeItem('dashboard_session');
-        }
-      } catch (e) {
-        console.error('Sessão inválida');
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-    }
-    setIsLoading(false);
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (email: string, password: string, remember: boolean) => {
-    const user = USERS.find(u => u.email === email && u.password === password);
-    
-    if (!user) {
-      return { success: false, message: 'Email ou senha incorretos' };
+  const signUp = async (email: string, password: string, metadata?: { full_name?: string }) => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: metadata
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Você já pode fazer login.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar conta",
+        description: error.message || "Ocorreu um erro ao criar sua conta",
+        variant: "destructive",
+      });
+      throw error;
     }
-
-    const { password: _, ...userWithoutPassword } = user;
-    setCurrentUser(userWithoutPassword);
-
-    const session: Session = {
-      user: userWithoutPassword,
-      timestamp: Date.now()
-    };
-
-    if (remember) {
-      localStorage.setItem('dashboard_session', JSON.stringify(session));
-    } else {
-      sessionStorage.setItem('dashboard_session', JSON.stringify(session));
-    }
-
-    return { success: true };
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('dashboard_session');
-    sessionStorage.removeItem('dashboard_session');
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Login realizado com sucesso! ✅",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer login",
+        description: error.message || "Email ou senha incorretos",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const hasPermission = (permission: string) => {
-    if (!currentUser) return false;
-    return currentUser.permissions.includes('all') || currentUser.permissions.includes(permission);
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      toast({
+        title: "Você saiu da conta",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao sair",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/login`;
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar email",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const updateProfile = async (data: { full_name?: string; avatar_url?: string }) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Perfil atualizado!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, logout, hasPermission, isLoading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      signUp, 
+      signIn, 
+      signOut, 
+      resetPassword, 
+      updateProfile 
+    }}>
       {children}
     </AuthContext.Provider>
   );
