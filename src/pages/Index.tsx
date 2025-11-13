@@ -13,6 +13,8 @@ import { InsightsModule } from '@/components/dashboard/modules/Insights';
 import { CompararFunisModule } from '@/components/dashboard/modules/CompararFunis';
 import { ExportarModule } from '@/components/dashboard/modules/Exportar';
 import { ComparacaoModule } from '@/components/dashboard/modules/OtherModules';
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -131,6 +133,10 @@ const Index = () => {
           )}
         </div>
       </div>
+
+      {/* PWA Components */}
+      <InstallPrompt />
+      <OfflineIndicator />
     </div>
   );
 };
