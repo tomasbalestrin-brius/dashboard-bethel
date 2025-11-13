@@ -14,32 +14,30 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
   const [isDesktopMinimized, setIsDesktopMinimized] = useState(false);
   const { hasPermission } = useAuth();
 
-  const isMobile = () => window.innerWidth < 1024;
-
   // Fechar sidebar mobile ao mudar de módulo
   useEffect(() => {
-    if (isMobile()) {
+    if (window.innerWidth < 1024) {
       setIsMobileOpen(false);
     }
   }, [currentModule]);
 
   // Prevenir scroll do body quando sidebar aberta no mobile
   useEffect(() => {
-    if (isMobileOpen && isMobile()) {
+    if (isMobileOpen && window.innerWidth < 1024) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     }
-
+    
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [isMobileOpen]);
 
   // Fechar ao redimensionar para desktop
   useEffect(() => {
     const handleResize = () => {
-      if (!isMobile()) {
+      if (window.innerWidth >= 1024) {
         setIsMobileOpen(false);
       }
     };
@@ -73,10 +71,10 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
 
   const handleNavigate = (moduleId: ModuleName) => {
     onModuleChange(moduleId);
-  };
-
-  const toggleDesktopMinimize = () => {
-    setIsDesktopMinimized(!isDesktopMinimized);
+    // Fechar sidebar no mobile
+    if (window.innerWidth < 1024) {
+      setIsMobileOpen(false);
+    }
   };
 
   return (
@@ -84,50 +82,49 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
       {/* HAMBURGUER BUTTON - Mobile apenas */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-[60] w-12 h-12 rounded-xl bg-card/90 backdrop-blur-xl border border-border flex items-center justify-center hover:bg-accent transition-colors shadow-xl"
+        className="fixed top-4 left-4 z-[60] w-12 h-12 rounded-xl bg-slate-800/90 backdrop-blur-xl border border-slate-700 flex items-center justify-center hover:bg-slate-700 transition-colors shadow-xl lg:hidden"
         aria-label="Abrir menu"
       >
         <div className="flex flex-col gap-1.5 w-6">
-          <span className="block h-0.5 bg-foreground rounded-full"></span>
-          <span className="block h-0.5 bg-foreground rounded-full"></span>
-          <span className="block h-0.5 bg-foreground rounded-full"></span>
+          <span className="block h-0.5 bg-white rounded-full"></span>
+          <span className="block h-0.5 bg-white rounded-full"></span>
+          <span className="block h-0.5 bg-white rounded-full"></span>
         </div>
       </button>
 
       {/* BACKDROP - Mobile apenas */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fadeIn"
           onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
         />
       )}
 
       {/* SIDEBAR */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen bg-card/95 backdrop-blur-xl border-r border-border shadow-2xl z-50
+          fixed top-0 left-0 h-screen z-50
+          bg-slate-900/95 backdrop-blur-xl 
+          border-r border-slate-800/50 shadow-2xl
           transition-all duration-300 ease-in-out
-          
+          w-64
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
-          
           ${isDesktopMinimized ? 'lg:w-20' : 'lg:w-64'}
-          
-          w-64
         `}
       >
         {/* HEADER */}
-        <div className={`border-b border-border transition-all ${isDesktopMinimized ? 'lg:p-4' : 'p-6'}`}>
+        <div className={`border-b border-slate-800/50 transition-all ${isDesktopMinimized ? 'lg:p-4' : 'p-6'}`}>
           <div className="flex items-center justify-between">
             {/* Logo e Título */}
             <div className={`flex items-center gap-3 ${isDesktopMinimized ? 'lg:justify-center lg:w-full' : ''}`}>
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/50">
                 <span className="text-2xl">📊</span>
               </div>
               {!isDesktopMinimized && (
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-foreground truncate">Dashboard</h3>
-                  <p className="text-xs text-muted-foreground truncate">Analytics</p>
+                  <h3 className="font-bold text-white truncate">Dashboard</h3>
+                  <p className="text-xs text-slate-400 truncate">Analytics</p>
                 </div>
               )}
             </div>
@@ -135,18 +132,20 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
             {/* Botão Fechar (Mobile) */}
             <button
               onClick={() => setIsMobileOpen(false)}
-              className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             >
               ✕
             </button>
 
             {/* Botão Minimizar (Desktop) */}
-            <button
-              onClick={toggleDesktopMinimize}
-              className={`hidden lg:flex w-8 h-8 rounded-lg items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors ${isDesktopMinimized ? 'lg:hidden' : ''}`}
-            >
-              ←
-            </button>
+            {!isDesktopMinimized && (
+              <button
+                onClick={() => setIsDesktopMinimized(true)}
+                className="hidden lg:flex w-8 h-8 rounded-lg items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                ←
+              </button>
+            )}
           </div>
         </div>
 
@@ -164,8 +163,8 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
                   w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative
                   ${isDesktopMinimized ? 'lg:justify-center lg:px-2' : ''}
                   ${active
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+                    ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-white'
+                    : 'hover:bg-slate-800/50 text-slate-400 hover:text-white border border-transparent'
                   }
                 `}
               >
@@ -176,14 +175,14 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
                 )}
                 
                 {!isDesktopMinimized && active && (
-                  <span className="ml-auto w-2 h-2 rounded-full bg-primary-foreground"></span>
+                  <span className="ml-auto w-2 h-2 rounded-full bg-purple-500"></span>
                 )}
 
                 {/* Tooltip Desktop Minimizado */}
                 {isDesktopMinimized && (
-                  <div className="hidden lg:block absolute left-full ml-2 px-3 py-2 bg-popover text-popover-foreground text-sm font-medium rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-xl z-50 border border-border">
+                  <div className="hidden lg:block absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-xl z-50">
                     {module.label}
-                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-popover"></div>
+                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-800"></div>
                   </div>
                 )}
               </button>
@@ -194,8 +193,8 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
         {/* Botão Expandir quando Minimizada (Desktop) */}
         {isDesktopMinimized && (
           <button
-            onClick={toggleDesktopMinimize}
-            className="hidden lg:flex absolute bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-secondary items-center justify-center text-foreground hover:bg-accent transition-colors shadow-xl"
+            onClick={() => setIsDesktopMinimized(false)}
+            className="hidden lg:flex absolute bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-slate-800 items-center justify-center text-white hover:bg-slate-700 transition-colors shadow-xl"
           >
             →
           </button>
