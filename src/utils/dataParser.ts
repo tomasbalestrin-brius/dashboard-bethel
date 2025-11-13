@@ -1,32 +1,55 @@
 import type { WeekData } from '@/types/dashboard';
 
-export function parseRow(row: any[]): WeekData {
-  const parseNumber = (val: any): number => {
-    if (val === null || val === undefined || val === '') return 0;
-    const num = typeof val === 'string' ? parseFloat(val.replace(/[^\d.-]/g, '')) : Number(val);
-    return isNaN(num) ? 0 : num;
-  };
-
-  const alunos = parseNumber(row[1]);
-  const qualificados = parseNumber(row[2]);
-  const agendados = parseNumber(row[3]);
-  const callRealizada = parseNumber(row[4]);
-  const numeroVenda = parseNumber(row[5]);
-  const investido = parseNumber(row[6]);
-  const faturamentoTrafego = parseNumber(row[7]);
-  const faturamentoFunil = parseNumber(row[8]);
-  const roasTrafego = parseNumber(row[9]);
-  const roasFunil = parseNumber(row[10]);
-  const vendaMonetizacao = parseNumber(row[11]);
-  const entradas = parseNumber(row[12]);
-  let lucroFunil = parseNumber(row[13]);
+// Parse value tratando erros do Excel e formatação brasileira
+export function parseValue(val: any): number {
+  if (val === null || val === undefined || val === '') return 0;
   
-  const taxaConversao = alunos > 0 ? (numeroVenda / alunos) * 100 : 0;
-
-  // Se lucroFunil não está na planilha (0), calcular
-  if (lucroFunil === 0 && faturamentoFunil > 0) {
-    lucroFunil = faturamentoFunil - investido;
+  // Tratar erros do Excel
+  if (typeof val === 'string') {
+    const upperVal = val.toUpperCase();
+    if (upperVal.includes('#N/A') || upperVal.includes('#DIV/0!') || 
+        upperVal.includes('#NUM!') || upperVal.includes('#VALOR!') ||
+        upperVal.includes('#REF!') || upperVal.includes('#NOME?')) {
+      return 0;
+    }
+    
+    // Remover caracteres não numéricos exceto vírgula e ponto
+    let cleaned = val.replace(/[^\d,.-]/g, '');
+    
+    // Remover pontos de milhar (assumindo formato brasileiro: 1.234,56)
+    cleaned = cleaned.replace(/\./g, '');
+    
+    // Substituir vírgula decimal por ponto
+    cleaned = cleaned.replace(',', '.');
+    
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
   }
+  
+  const num = Number(val);
+  return isNaN(num) ? 0 : num;
+}
+
+export function parseRow(row: any[]): WeekData {
+  // Mapear colunas conforme estrutura da planilha
+  const investido = parseValue(row[1]);           // Coluna B
+  const faturamentoTrafego = parseValue(row[2]);  // Coluna C
+  const roasTrafego = parseValue(row[3]);         // Coluna D
+  const alunos = parseValue(row[4]);              // Coluna E
+  const qualificados = parseValue(row[5]);        // Coluna F
+  const agendados = parseValue(row[6]);           // Coluna G
+  const taxaAgendamento = parseValue(row[7]);     // Coluna H
+  const callRealizada = parseValue(row[8]);       // Coluna I
+  const taxaComparecimento = parseValue(row[9]);  // Coluna J
+  const numeroVenda = parseValue(row[10]);        // Coluna K
+  const taxaConversao = parseValue(row[11]);      // Coluna L
+  const taxaAscensao = parseValue(row[12]);       // Coluna M
+  const vendaMonetizacao = parseValue(row[13]);   // Coluna N
+  const entradas = parseValue(row[14]);           // Coluna O
+  const faturamentoFunil = parseValue(row[15]);   // Coluna P
+  const lucroFunil = parseValue(row[16]);         // Coluna Q
+  
+  const roasFunil = investido > 0 ? (faturamentoFunil / investido) : 0;
 
   return {
     alunos,
