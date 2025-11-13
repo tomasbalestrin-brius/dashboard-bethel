@@ -1,6 +1,5 @@
 import { MonthSelector } from '../MonthSelector';
-import { TeamSelector } from '../TeamSelector';
-import { ProductSelector } from '../ProductSelector';
+import { ProductGroupNavigation } from '../ProductGroupNavigation';
 import { Funnel } from '../Funnel';
 import { StatsPanel } from '../StatsPanel';
 import { Ranking } from '../Ranking';
@@ -13,11 +12,9 @@ import type { AllData } from '@/types/dashboard';
 interface DashboardModuleProps {
   allData: AllData;
   currentMonth: string;
-  currentTeam: 'geral' | 'cleiton' | 'julia';
   currentProduct: string;
   currentWeek: string;
   onMonthSelect: (monthId: string) => void;
-  onTeamSelect: (team: 'geral' | 'cleiton' | 'julia') => void;
   onProductSelect: (productId: string) => void;
   onWeekChange: (week: string) => void;
 }
@@ -25,11 +22,9 @@ interface DashboardModuleProps {
 export function DashboardModule({
   allData,
   currentMonth,
-  currentTeam,
   currentProduct,
   currentWeek,
   onMonthSelect,
-  onTeamSelect,
   onProductSelect,
   onWeekChange,
 }: DashboardModuleProps) {
@@ -78,11 +73,12 @@ export function DashboardModule({
       </div>
 
       <MonthSelector currentMonth={currentMonth} onMonthSelect={onMonthSelect} />
-      <TeamSelector currentTeam={currentTeam} onTeamSelect={onTeamSelect} />
-      <ProductSelector
-        currentTeam={currentTeam}
-        currentProduct={currentProduct}
-        onProductSelect={onProductSelect}
+      
+      {/* Navegação Hierárquica */}
+      <ProductGroupNavigation
+        selectedProduct={currentProduct}
+        onSelectProduct={onProductSelect}
+        availableProducts={Object.keys(allData)}
       />
 
       {/* Nome do produto em destaque */}
