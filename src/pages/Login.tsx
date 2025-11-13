@@ -1,18 +1,27 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LoadingButton } from '@/components/auth/LoadingButton';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
 
   // Redirect if already logged in
   useEffect(() => {
@@ -21,22 +30,10 @@ export default function Login() {
     }
   }, [user, navigate]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
-    // Basic validation
-    if (!email || !password) {
-      return;
-    }
-
-    if (password.length < 6) {
-      return;
-    }
-
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-
     try {
-      await signIn(email, password);
+      await signIn(data.email, data.password);
       navigate('/');
     } catch (error) {
       // Error is handled by the signIn function with toast
@@ -59,7 +56,7 @@ export default function Login() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-semibold text-slate-300">
                 Email
@@ -67,13 +64,14 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                required
                 autoComplete="email"
                 className="h-12 bg-slate-900/50 border-slate-700 focus:ring-purple-500 focus:border-purple-500"
+                {...register('email')}
               />
+              {errors.email && (
+                <p className="text-sm text-red-400 mt-1">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -84,12 +82,10 @@ export default function Login() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
                   autoComplete="current-password"
                   className="h-12 pr-12 bg-slate-900/50 border-slate-700 focus:ring-purple-500 focus:border-purple-500"
+                  {...register('password')}
                 />
                 <button
                   type="button"
@@ -99,6 +95,9 @@ export default function Login() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-400 mt-1">{errors.password.message}</p>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
@@ -110,20 +109,13 @@ export default function Login() {
               </Link>
             </div>
 
-            <Button
+            <LoadingButton
               type="submit"
-              disabled={isLoading}
-              className="w-full h-12 text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all hover:shadow-lg"
+              loading={isLoading}
+              className="w-full h-12 text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Entrando...
-                </span>
-              ) : (
-                'Entrar'
-              )}
-            </Button>
+              Entrar
+            </LoadingButton>
           </form>
 
           {/* Footer */}
