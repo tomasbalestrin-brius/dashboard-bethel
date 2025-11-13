@@ -78,22 +78,12 @@ export function UserMenu() {
         
         <DropdownMenuSeparator className="bg-slate-800" />
         
-        <DropdownMenuItem 
-          disabled
-          className="text-slate-500 cursor-not-allowed"
-        >
-          <User className="mr-2 h-4 w-4" />
-          <span>Perfil</span>
-          <span className="ml-auto text-xs">(em breve)</span>
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem 
-          disabled
-          className="text-slate-500 cursor-not-allowed"
-        >
-          <span>Configurações</span>
-          <span className="ml-auto text-xs">(em breve)</span>
-        </DropdownMenuItem>
+        <Link to="/profile">
+          <DropdownMenuItem className="cursor-pointer">
+            <User className="mr-2 h-4 w-4" />
+            <span>Meu Perfil</span>
+          </DropdownMenuItem>
+        </Link>
         
         <DropdownMenuSeparator className="bg-slate-800" />
         
