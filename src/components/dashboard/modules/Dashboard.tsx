@@ -96,34 +96,33 @@ export function DashboardModule({
       {/* Cards de Métricas Principais */}
       <MetricasCard productData={productData} />
 
-      {/* Funil e Stats - Layout Original */}
-      <div className="grid grid-cols-[1fr_420px] gap-5 mb-[30px] max-lg:grid-cols-1 max-md:gap-[15px]">
-        <div className="bg-[hsl(var(--bg-secondary))] rounded-2xl p-[18px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] max-md:p-[15px]">
-          <div className="flex justify-between items-center mb-3 flex-wrap gap-3 max-md:flex-col max-md:items-start max-md:gap-2.5">
-            <h2 className="text-[1.15rem] text-[hsl(var(--text-primary))] max-md:text-[1.1rem]">
-              Funil de Conversão - {currentProduct} ({periodText})
-            </h2>
-            <div className="flex items-center gap-2 max-md:w-full">
-              <label className="text-[hsl(var(--text-secondary))] text-xs font-semibold">📅 Período:</label>
-              <select
-                value={currentWeek}
-                onChange={(e) => onWeekChange(e.target.value)}
-                className="py-1.5 px-3 rounded-md border-2 border-[hsl(var(--border-color))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] text-[0.85rem] font-semibold cursor-pointer transition-all duration-300 hover:border-[hsl(var(--accent-primary))] focus:outline-none focus:border-[hsl(var(--accent-primary))] max-md:w-full"
-              >
-                <option value="total">Total do Mês</option>
-                <option value="1">Semana 1</option>
-                <option value="2">Semana 2</option>
-                <option value="3">Semana 3</option>
-                <option value="4">Semana 4</option>
-              </select>
-            </div>
+      {/* Funil - Layout Modificado */}
+      <div className="bg-[hsl(var(--bg-secondary))] rounded-2xl p-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)] mb-4 max-md:p-3">
+        <div className="flex justify-between items-center mb-2 flex-wrap gap-2 max-md:flex-col max-md:items-start max-md:gap-2">
+          <h2 className="text-base text-[hsl(var(--text-primary))] max-md:text-sm">
+            Funil de Conversão - {currentProduct} ({periodText})
+          </h2>
+          <div className="flex items-center gap-2 max-md:w-full">
+            <label className="text-[hsl(var(--text-secondary))] text-xs font-semibold">📅 Período:</label>
+            <select
+              value={currentWeek}
+              onChange={(e) => onWeekChange(e.target.value)}
+              className="py-1 px-2 rounded-md border-2 border-[hsl(var(--border-color))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] text-xs font-semibold cursor-pointer transition-all duration-300 hover:border-[hsl(var(--accent-primary))] focus:outline-none focus:border-[hsl(var(--accent-primary))] max-md:w-full"
+            >
+              <option value="total">Total do Mês</option>
+              <option value="1">Semana 1</option>
+              <option value="2">Semana 2</option>
+              <option value="3">Semana 3</option>
+              <option value="4">Semana 4</option>
+            </select>
           </div>
-          
-          <Funnel data={funnelData} productName={currentProduct} period={periodText} />
         </div>
-
-        {productData && <StatsPanel data={productData} />}
+        
+        <Funnel data={funnelData} productName={currentProduct} period={periodText} />
       </div>
+
+      {/* Stats Panel - Movido para baixo */}
+      {productData && <StatsPanel data={productData} />}
 
       {/* Tabela de Semanas */}
       <TabelaSemanas productData={productData} />
