@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeSelector } from '@/components/dashboard/ThemeSelector';
-import { MobileHeader } from '@/components/dashboard/MobileHeader';
-import { Sidebar } from '@/components/dashboard/Sidebar';
+import { ResponsiveSidebar } from '@/components/dashboard/ResponsiveSidebar';
 import { BottomNav } from '@/components/dashboard/BottomNav';
 import { ToastContainer } from '@/components/dashboard/Toast';
 import { DashboardModule } from '@/components/dashboard/modules/Dashboard';
@@ -29,7 +29,6 @@ const Index = () => {
     currentModule,
     theme,
     loading,
-    mobileMenuOpen,
     toasts,
     selectMonth,
     selectTeam,
@@ -38,8 +37,9 @@ const Index = () => {
     selectModule,
     changeTheme,
     removeToast,
-    setMobileMenuOpen,
   } = useDashboardData();
+
+  const [sidebarMinimized, setSidebarMinimized] = useState(false);
 
   return (
     <div className="min-h-screen bg-secondary">
@@ -79,26 +79,17 @@ const Index = () => {
       </div>
 
       <ThemeSelector currentTheme={theme} onThemeChange={changeTheme} />
-      <MobileHeader currentModule={currentModule} onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
       
-      {mobileMenuOpen && (
-        <div
-          className="hidden max-md:block fixed inset-0 bg-black/50 z-[999] opacity-100 transition-opacity duration-300"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-      
-      <Sidebar
+      <ResponsiveSidebar
         currentModule={currentModule}
         onModuleChange={selectModule}
-        mobileMenuOpen={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
+        onMinimizeChange={setSidebarMinimized}
       />
       
       <BottomNav currentModule={currentModule} onModuleChange={selectModule} />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      <div className="ml-[240px] p-8 max-md:ml-0 max-md:pt-[76px] max-md:pb-[86px] max-md:px-4">
+      <div className={`transition-all duration-300 ease-in-out min-h-screen pt-20 px-4 pb-8 lg:pt-8 lg:pb-[86px] ${sidebarMinimized ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <div className="max-w-[1400px] mx-auto">
           {loading ? (
             <div className="text-center p-20">
