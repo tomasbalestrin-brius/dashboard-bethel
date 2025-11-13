@@ -117,61 +117,51 @@ export function useDashboardData() {
         }
       }
 
-      // Verificar se API key está configurada
-      const apiKey = import.meta.env.VITE_GOOGLE_SHEETS_API_KEY;
-      if (!apiKey) {
-        throw new Error('API Key do Google Sheets não configurada. Configure VITE_GOOGLE_SHEETS_API_KEY nas variáveis de ambiente.');
-      }
-
-      // Buscar dados via Google Sheets API diretamente
-      console.log('🔄 Buscando dados da Google Sheets API...');
-      console.log('📋 Mês:', month.name, '| Range: A1:Q100 | GID:', month.gid);
+      // Buscar dados via Edge Function (que tem acesso à service account)
+      console.log('🔄 Buscando dados da API via Edge Function...');
+      console.log('📋 Mês:', month.name, '| Range: A1:Q100');
       
-      // Usar gid para acessar a aba específica
-      const spreadsheetId = SHEET_ID;
-      const range = 'A1:Q100';
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}&majorDimension=ROWS${month.gid ? `&ranges=${encodeURIComponent(month.name + '!' + range)}` : ''}`;
+      // Usar o nome da aba concatenado com o range no formato: NomeAba!A1:Q100
+      const fullRange = `${month.name}!A1:Q100`;
       
-      console.log('🌐 URL da API:', url.replace(apiKey, 'API_KEY_HIDDEN'));
-
-      const response = await fetch(url, {
-        method: 'GET',
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-sheets-data`;
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          range: fullRange
+        }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Erro na resposta da API:', response.status, errorText);
-        
-        if (response.status === 403) {
-          throw new Error('Acesso negado. Verifique se a API key está correta e se a planilha está pública.');
-        } else if (response.status === 404) {
-          throw new Error('Planilha ou aba não encontrada. Verifique o ID da planilha e o nome da aba.');
-        } else if (response.status === 429) {
-          throw new Error('Muitas requisições. Aguarde alguns segundos e tente novamente.');
-        } else {
-          throw new Error(`Erro ao buscar dados: ${response.status} - ${errorText}`);
-        }
+        console.error('❌ Erro na resposta da edge function:', response.status, errorText);
+        throw new Error(`Erro ${response.status}: ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('📥 Resposta da API recebida:', result);
+      console.log('📥 Resposta da edge function:', result);
 
-      if (!result.values || !Array.isArray(result.values)) {
+      if (!result.success) {
+        throw new Error(result.error || 'Erro ao buscar dados');
+      }
+
+      if (!result.data || !Array.isArray(result.data)) {
         throw new Error('Formato de dados inválido recebido da API');
       }
 
-      console.log(`✅ Dados recebidos: ${result.values.length} linhas`);
+      console.log(`✅ Dados recebidos: ${result.data.length} linhas`);
 
       // Salvar em cache
       localStorage.setItem(cacheKey, JSON.stringify({
-        data: result.values,
+        data: result.data,
         timestamp: Date.now()
       }));
 
-      parseAndSetData(result.values);
+      parseAndSetData(result.data);
       setLoading(false);
       showToast('Dados carregados com sucesso!', 'success', 2000);
       
