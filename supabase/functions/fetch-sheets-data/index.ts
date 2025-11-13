@@ -11,13 +11,13 @@ serve(async (req) => {
   }
 
   try {
-    const { sheetName, range } = await req.json();
+    const { range, gid } = await req.json();
     
-    if (!sheetName || !range) {
-      throw new Error('sheetName e range são obrigatórios');
+    if (!range) {
+      throw new Error('range é obrigatório');
     }
 
-    console.log(`🔄 Buscando dados da aba: ${sheetName}, range: ${range}`);
+    console.log(`🔄 Buscando dados - Range: ${range}${gid ? `, GID: ${gid}` : ''}`);
 
     // Configurar credenciais do service account
     const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
@@ -150,11 +150,11 @@ serve(async (req) => {
       }
       
       if (sheetsResponse.status === 403) {
-        throw new Error('Acesso negado. Verifique se a service account tem permissão para acessar a planilha.');
+        throw new Error('Acesso negado. Certifique-se de que a service account tem permissão para visualizar a planilha.');
       } else if (sheetsResponse.status === 404) {
-        throw new Error(`Planilha ou range não encontrado. Range solicitado: ${range}`);
+        throw new Error(`Planilha ou range não encontrado. Range: ${range}`);
       } else if (sheetsResponse.status === 400) {
-        throw new Error(`Range inválido: ${range}. Detalhes: ${errorDetail}`);
+        throw new Error(`Range inválido: ${range}. Verifique se o nome da aba está correto na planilha. Detalhes: ${errorDetail}`);
       } else if (sheetsResponse.status === 429) {
         throw new Error('Limite de requisições excedido. Aguarde alguns segundos.');
       }
