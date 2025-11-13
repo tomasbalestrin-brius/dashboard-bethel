@@ -17,6 +17,7 @@ export interface WeekData {
   alunos: number;
   qualificados: number;
   agendados: number;
+  taxaAgendamento: number;
   callRealizada: number;
   numeroVenda: number;
   investido: number;

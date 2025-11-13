@@ -22,21 +22,23 @@ export function MetricasCard({ productData }: MetricasCardProps) {
     let totalFaturamento = 0;
     let totalLucro = 0;
     let totalVendas = 0;
-    let totalQualificados = 0;
-    let totalAgendados = 0;
+    let somaTaxaConversao = 0;
+    let somaTaxaAgendamento = 0;
+    let numSemanas = 0;
 
     productData.semanas.forEach(semana => {
       totalInvestido += semana.investido;
       totalFaturamento += semana.faturamentoFunil;
       totalLucro += semana.lucroFunil;
       totalVendas += semana.numeroVenda;
-      totalQualificados += semana.qualificados;
-      totalAgendados += semana.agendados;
+      somaTaxaConversao += semana.taxaConversao;
+      somaTaxaAgendamento += semana.taxaAgendamento;
+      numSemanas++;
     });
 
     const roi = totalInvestido > 0 ? ((totalLucro / totalInvestido) * 100) : 0;
-    const taxaConversao = totalQualificados > 0 ? ((totalVendas / totalQualificados) * 100) : 0;
-    const taxaAgendamento = totalQualificados > 0 ? ((totalAgendados / totalQualificados) * 100) : 0;
+    const taxaConversao = numSemanas > 0 ? (somaTaxaConversao / numSemanas) : 0;
+    const taxaAgendamento = numSemanas > 0 ? (somaTaxaAgendamento / numSemanas) : 0;
 
     return {
       totalInvestido,
