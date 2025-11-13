@@ -55,6 +55,7 @@ export function parseRow(row: any[]): WeekData {
     alunos,
     qualificados,
     agendados,
+    taxaAgendamento,
     callRealizada,
     numeroVenda,
     investido,
