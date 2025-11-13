@@ -5,6 +5,8 @@ import { Funnel } from '../Funnel';
 import { StatsPanel } from '../StatsPanel';
 import { Ranking } from '../Ranking';
 import { TotaisGerais } from '../TotaisGerais';
+import { MetricasCard } from '../MetricasCard';
+import { TabelaSemanas } from '../TabelaSemanas';
 import type { AllData } from '@/types/dashboard';
 
 interface DashboardModuleProps {
@@ -82,6 +84,19 @@ export function DashboardModule({
         onProductSelect={onProductSelect}
       />
 
+      {/* Nome do produto em destaque */}
+      {productData && (
+        <div className="mb-6 p-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg shadow-lg">
+          <h2 className="text-4xl font-bold text-center text-white max-md:text-2xl">
+            {currentProduct}
+          </h2>
+        </div>
+      )}
+
+      {/* Cards de Métricas Principais */}
+      <MetricasCard productData={productData} />
+
+      {/* Funil e Stats - Layout Original */}
       <div className="grid grid-cols-[1fr_420px] gap-5 mb-[30px] max-lg:grid-cols-1 max-md:gap-[15px]">
         <div className="bg-[hsl(var(--bg-secondary))] rounded-2xl p-[18px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] max-md:p-[15px]">
           <div className="flex justify-between items-center mb-3 flex-wrap gap-3 max-md:flex-col max-md:items-start max-md:gap-2.5">
@@ -110,8 +125,13 @@ export function DashboardModule({
         {productData && <StatsPanel data={productData} />}
       </div>
 
+      {/* Tabela de Semanas */}
+      <TabelaSemanas productData={productData} />
+
+      {/* Ranking de Produtos */}
       <Ranking allData={allData} />
 
+      {/* Totais do Produto Selecionado */}
       <TotaisGerais productData={productData} productName={currentProduct} />
     </div>
   );
