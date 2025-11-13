@@ -115,9 +115,8 @@ export function useDashboardData() {
       // Buscar dados via Google Sheets API
       console.log('🔄 Buscando dados da API...');
       
-      // Usar apenas o range sem nome de aba - a primeira aba será usada por padrão
-      // Ou se a planilha tem várias abas, use o formato correto do nome da aba
-      const range = 'A1:Q100';
+      // Usar o nome da aba concatenado com o range no formato correto
+      const fullRange = `${month.name}!A1:Q100`;
       
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-sheets-data`;
       
@@ -127,8 +126,7 @@ export function useDashboardData() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          range: range,
-          gid: month.gid
+          range: fullRange
         }),
       });
 
