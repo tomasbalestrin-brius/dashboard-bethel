@@ -89,7 +89,7 @@ const Index = () => {
       <BottomNav currentModule={currentModule} onModuleChange={selectModule} />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      <div className={`transition-all duration-300 ease-in-out min-h-screen pt-20 px-4 pb-8 lg:pt-8 lg:pb-[86px] ${sidebarMinimized ? 'lg:ml-20' : 'lg:ml-64'}`}>
+      <div className={`transition-all duration-300 ease-in-out min-h-screen pt-20 px-4 pb-8 lg:pt-8 lg:pb-8 ${sidebarMinimized ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <div className="max-w-[1400px] mx-auto">
           {loading ? (
             <div className="text-center p-20">
