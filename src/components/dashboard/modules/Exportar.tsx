@@ -1,4 +1,8 @@
+import { useState } from 'react';
+
 export function ExportarModule() {
+  const [exporting, setExporting] = useState(false);
+  const [progress, setProgress] = useState(0);
   const exportOptions = [
     {
       icon: '📄',
@@ -26,6 +30,24 @@ export function ExportarModule() {
     },
   ];
 
+  const handleExportPDF = async () => {
+    setExporting(true);
+    setProgress(0);
+    try {
+      // Simulate export progress
+      for (let i = 0; i <= 100; i += 10) {
+        setProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      alert('Funcionalidade de Exportar PDF em desenvolvimento!');
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+    } finally {
+      setExporting(false);
+      setProgress(0);
+    }
+  };
+
   const handleExport = (type: string) => {
     alert(`Funcionalidade de ${type} em desenvolvimento!`);
   };
@@ -39,6 +61,41 @@ export function ExportarModule() {
         <p className="text-xl text-[hsl(var(--text-secondary))] mb-2.5 max-md:text-sm">
           Exporte seus dados em diferentes formatos
         </p>
+      </div>
+
+      <div className="flex justify-center mb-8">
+        <button
+          onClick={handleExportPDF}
+          disabled={exporting}
+          className="relative group overflow-hidden px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-w-[280px]"
+        >
+          {/* Progress overlay */}
+          {exporting && (
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+          )}
+          
+          {/* Shimmer effect */}
+          {exporting && (
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+          )}
+          
+          <div className="relative flex items-center justify-center gap-2">
+            {exporting ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Gerando PDF... {progress}%</span>
+              </>
+            ) : (
+              <>
+                <span className="text-2xl">📄</span>
+                <span>Exportar Relatório em PDF</span>
+              </>
+            )}
+          </div>
+        </button>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5 mb-[30px] max-md:grid-cols-1">

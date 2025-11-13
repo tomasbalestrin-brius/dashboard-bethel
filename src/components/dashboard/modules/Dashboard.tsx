@@ -7,6 +7,7 @@ import { Ranking } from '../Ranking';
 import { TotaisGerais } from '../TotaisGerais';
 import { MetricasCard } from '../MetricasCard';
 import { TabelaSemanas } from '../TabelaSemanas';
+import { GraficosEvolucao } from '../GraficosEvolucao';
 import type { AllData } from '@/types/dashboard';
 
 interface DashboardModuleProps {
@@ -123,6 +124,9 @@ export function DashboardModule({
 
       {/* Stats Panel - Movido para baixo */}
       {productData && <StatsPanel data={productData} />}
+
+      {/* Gráficos de Evolução */}
+      <GraficosEvolucao productData={productData} productName={currentProduct} />
 
       {/* Tabela de Semanas */}
       <TabelaSemanas productData={productData} />
