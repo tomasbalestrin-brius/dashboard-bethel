@@ -102,11 +102,9 @@ const Index = () => {
                 <DashboardModule
                   allData={allData}
                   currentMonth={currentMonth}
-                  currentTeam={currentTeam}
                   currentProduct={currentProduct}
                   currentWeek={currentWeek}
                   onMonthSelect={selectMonth}
-                  onTeamSelect={selectTeam}
                   onProductSelect={selectProduct}
                   onWeekChange={setCurrentWeek}
                 />
