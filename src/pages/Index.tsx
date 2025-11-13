@@ -1,6 +1,5 @@
 import React from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { useAuth } from '@/contexts/AuthContext';
 import { ThemeSelector } from '@/components/dashboard/ThemeSelector';
 import { ResponsiveSidebar } from '@/components/dashboard/ResponsiveSidebar';
 import { BottomNav } from '@/components/dashboard/BottomNav';
@@ -15,11 +14,9 @@ import { ExportarModule } from '@/components/dashboard/modules/Exportar';
 import { ComparacaoModule } from '@/components/dashboard/modules/OtherModules';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
-import { LogOut, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { UserMenu } from '@/components/UserMenu';
 
 const Index = () => {
-  const { currentUser, logout, hasPermission } = useAuth();
   const {
     allData,
     currentMonth,
@@ -43,39 +40,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-secondary">
-      {/* User Info and Logout */}
-      <div className="fixed top-4 right-4 z-[1001] flex items-center gap-3 max-md:hidden">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            // Limpar cache
-            Object.keys(localStorage).forEach(key => {
-              if (key.startsWith('dashboard_cache_')) {
-                localStorage.removeItem(key);
-              }
-            });
-            window.location.reload();
-          }}
-          className="h-8 gap-2"
-          title="Atualizar dados da planilha"
-        >
-          🔄 Atualizar
-        </Button>
-        <div className="bg-card border border-border rounded-lg px-4 py-2 flex items-center gap-3 shadow-sm">
-          <User className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">{currentUser?.name}</span>
-          <div className="h-4 w-px bg-border" />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={logout}
-            className="h-8 gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className="w-4 h-4" />
-            Sair
-          </Button>
-        </div>
+      {/* User Menu */}
+      <div className="fixed top-4 right-4 z-[1001] max-md:hidden">
+        <UserMenu />
       </div>
 
       <ThemeSelector currentTheme={theme} onThemeChange={changeTheme} />

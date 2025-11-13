@@ -12,7 +12,6 @@ interface ResponsiveSidebarProps {
 export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeChange }: ResponsiveSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDesktopMinimized, setIsDesktopMinimized] = useState(false);
-  const { hasPermission } = useAuth();
 
   // Fechar sidebar mobile ao mudar de módulo
   useEffect(() => {
@@ -51,7 +50,7 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
     onMinimizeChange?.(isDesktopMinimized);
   }, [isDesktopMinimized, onMinimizeChange]);
 
-  const allModules = [
+  const modules = [
     { id: 'dashboard' as ModuleName, icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'resumo' as ModuleName, icon: FileText, label: 'Resumo Geral' },
     { id: 'roi' as ModuleName, icon: TrendingUp, label: 'Lucro e ROAS' },
@@ -61,13 +60,6 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
     { id: 'comparacao' as ModuleName, icon: Calendar, label: 'Comparar Meses' },
     { id: 'exportar' as ModuleName, icon: Download, label: 'Exportar' },
   ];
-
-  const modules = allModules.filter(module => {
-    if (module.id === 'exportar') {
-      return hasPermission('all') || hasPermission('export');
-    }
-    return true;
-  });
 
   const handleNavigate = (moduleId: ModuleName) => {
     onModuleChange(moduleId);
