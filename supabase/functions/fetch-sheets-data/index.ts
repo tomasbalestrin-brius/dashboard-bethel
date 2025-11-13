@@ -17,7 +17,7 @@ serve(async (req) => {
       throw new Error('sheetName e range são obrigatórios');
     }
 
-    console.log(`🔄 Buscando dados: ${sheetName}!${range}`);
+    console.log(`🔄 Buscando dados da aba: ${sheetName}, range: ${range}`);
 
     // Configurar credenciais do service account
     const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
@@ -127,9 +127,9 @@ serve(async (req) => {
     // ID da planilha
     const SHEET_ID = '1V0-yWzGbDWUEQ21CPtNcHrzPQfLTXKHNBYUlSfzO2Pc';
 
-    // Buscar dados da planilha
+    // Buscar dados da planilha - usando apenas o range sem especificar a aba
     const sheetsResponse = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheetName)}!${range}`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -139,17 +139,27 @@ serve(async (req) => {
 
     if (!sheetsResponse.ok) {
       const errorText = await sheetsResponse.text();
-      console.error('Erro da API:', errorText);
+      console.error('❌ Erro da API Google Sheets:', errorText);
+      
+      let errorDetail = '';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorDetail = errorJson.error?.message || '';
+      } catch (e) {
+        errorDetail = errorText;
+      }
       
       if (sheetsResponse.status === 403) {
-        throw new Error('Acesso negado. Verifique as permissões da planilha.');
+        throw new Error('Acesso negado. Verifique se a service account tem permissão para acessar a planilha.');
       } else if (sheetsResponse.status === 404) {
-        throw new Error('Planilha ou aba não encontrada.');
+        throw new Error(`Planilha ou range não encontrado. Range solicitado: ${range}`);
+      } else if (sheetsResponse.status === 400) {
+        throw new Error(`Range inválido: ${range}. Detalhes: ${errorDetail}`);
       } else if (sheetsResponse.status === 429) {
         throw new Error('Limite de requisições excedido. Aguarde alguns segundos.');
       }
       
-      throw new Error(`Erro ao buscar dados: ${sheetsResponse.statusText}`);
+      throw new Error(`Erro ao buscar dados (${sheetsResponse.status}): ${errorDetail || sheetsResponse.statusText}`);
     }
 
     const sheetsData = await sheetsResponse.json();

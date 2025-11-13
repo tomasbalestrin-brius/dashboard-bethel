@@ -114,6 +114,10 @@ export function useDashboardData() {
 
       // Buscar dados via Google Sheets API
       console.log('🔄 Buscando dados da API...');
+      
+      // Usar o nome da aba concatenado com o range no formato correto
+      const fullRange = `${month.name}!A1:Q100`;
+      
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-sheets-data`;
       
       const response = await fetch(functionUrl, {
@@ -123,7 +127,7 @@ export function useDashboardData() {
         },
         body: JSON.stringify({
           sheetName: month.name,
-          range: 'A1:Q100'
+          range: fullRange
         }),
       });
 
