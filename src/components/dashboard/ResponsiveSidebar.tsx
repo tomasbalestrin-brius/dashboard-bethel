@@ -104,11 +104,12 @@ export function ResponsiveSidebar({ currentModule, onModuleChange, onMinimizeCha
       <aside
         className={`
           fixed top-0 left-0 h-screen z-50
-          bg-slate-900/95 backdrop-blur-xl 
-          border-r border-slate-800/50 shadow-2xl
+          bg-card backdrop-blur-xl 
+          border-r border-border shadow-2xl
           transition-all duration-300 ease-in-out
           w-64
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          -translate-x-full
+          ${isMobileOpen ? '!translate-x-0' : ''}
           lg:translate-x-0
           ${isDesktopMinimized ? 'lg:w-20' : 'lg:w-64'}
         `}
