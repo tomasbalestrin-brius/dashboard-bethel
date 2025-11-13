@@ -5,12 +5,19 @@ import { parseRow } from '@/utils/dataParser';
 
 const SHEET_ID = '1V0-yWzGbDWUEQ21CPtNcHrzPQfLTXKHNBYUlSfzO2Pc';
 
+// Mapeamento de nomes de exibição para nomes reais das abas
+const SHEET_NAMES: Record<string, string> = {
+  'Outubro': 'Dados de Out/25',
+  'Novembro': 'Dados de Nov/25',
+  'Dezembro': 'Dados de Dez/25',
+  'Janeiro': 'Dados de Jan/26',
+};
+
 export const MONTHS: Month[] = [
   { id: 'out', name: 'Outubro', gid: '0', startDate: '2024-10-01', endDate: '2024-10-31' },
   { id: 'nov', name: 'Novembro', gid: '799831430', startDate: '2024-11-01', endDate: '2024-11-30' },
   { id: 'dez', name: 'Dezembro', gid: '1796217875', startDate: '2024-12-01', endDate: '2024-12-31' },
   { id: 'jan', name: 'Janeiro', gid: '1107738440', startDate: '2025-01-01', endDate: '2025-01-31' },
-  { id: 'fev', name: 'Fevereiro', gid: '668056747', startDate: '2025-02-01', endDate: '2025-02-28' },
 ];
 
 export const ALL_PRODUCTS: Product[] = [
@@ -119,10 +126,15 @@ export function useDashboardData() {
 
       // Buscar dados via Edge Function (que tem acesso à service account)
       console.log('🔄 Buscando dados da API via Edge Function...');
-      console.log('📋 Mês:', month.name, '| Range: A1:Q100');
       
-      // Usar o nome da aba concatenado com o range no formato: NomeAba!A1:Q100
-      const fullRange = `${month.name}!A1:Q100`;
+      // Mapear o nome do mês para o nome real da aba na planilha
+      const sheetName = SHEET_NAMES[month.name];
+      if (!sheetName) {
+        throw new Error(`Mês não mapeado: ${month.name}`);
+      }
+      
+      const fullRange = `${sheetName}!A1:Q100`;
+      console.log('📋 Mês:', month.name, '| Aba:', sheetName, '| Range:', fullRange);
       
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-sheets-data`;
       
