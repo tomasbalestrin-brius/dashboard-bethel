@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeSelector } from '@/components/dashboard/ThemeSelector';
@@ -39,7 +39,7 @@ const Index = () => {
     removeToast,
   } = useDashboardData();
 
-  const [sidebarMinimized, setSidebarMinimized] = useState(false);
+  const [sidebarMinimized, setSidebarMinimized] = React.useState(false);
 
   return (
     <div className="min-h-screen bg-secondary">
