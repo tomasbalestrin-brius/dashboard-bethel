@@ -40,14 +40,22 @@ serve(async (req) => {
       throw new Error('GOOGLE_SERVICE_ACCOUNT deve conter um JSON válido com todo o conteúdo do arquivo service account');
     }
     
+    // Helper para base64url encoding
+    const base64url = (input: string): string => {
+      return btoa(input)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+    };
+
     // Obter access token usando JWT
-    const jwtHeader = btoa(JSON.stringify({
+    const jwtHeader = base64url(JSON.stringify({
       alg: "RS256",
       typ: "JWT"
     }));
 
     const now = Math.floor(Date.now() / 1000);
-    const jwtClaimSet = btoa(JSON.stringify({
+    const jwtClaimSet = base64url(JSON.stringify({
       iss: credentials.client_email,
       scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
       aud: "https://oauth2.googleapis.com/token",
@@ -58,11 +66,18 @@ serve(async (req) => {
     // Importar chave privada
     const pemHeader = "-----BEGIN PRIVATE KEY-----";
     const pemFooter = "-----END PRIVATE KEY-----";
-    const pemContents = credentials.private_key.substring(
-      pemHeader.length,
-      credentials.private_key.length - pemFooter.length
-    ).replace(/\s/g, "");
+    const privateKeyPem = credentials.private_key;
     
+    // Extrair o conteúdo da chave sem os headers
+    let pemContents = privateKeyPem;
+    if (privateKeyPem.includes(pemHeader)) {
+      pemContents = privateKeyPem
+        .replace(pemHeader, '')
+        .replace(pemFooter, '')
+        .replace(/\s/g, '');
+    }
+    
+    // Decodificar base64 para binário
     const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
     
     const privateKey = await crypto.subtle.importKey(
@@ -84,12 +99,11 @@ serve(async (req) => {
       new TextEncoder().encode(dataToSign)
     );
 
-    const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    // Converter signature para base64url
+    const signatureArray = new Uint8Array(signature);
+    const signatureBase64 = base64url(String.fromCharCode(...signatureArray));
 
-    const jwt = `${dataToSign}.${signatureBase64}`;
+    const jwt = `${jwtHeader}.${jwtClaimSet}.${signatureBase64}`;
 
     // Obter access token
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
