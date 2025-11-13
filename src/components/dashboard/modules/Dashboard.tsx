@@ -112,7 +112,7 @@ export function DashboardModule({
 
       <Ranking allData={allData} />
 
-      <TotaisGerais allData={allData} />
+      <TotaisGerais productData={productData} productName={currentProduct} />
     </div>
   );
 }
