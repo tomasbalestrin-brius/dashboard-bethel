@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import Papa from 'papaparse';
 import type { AllData, Month, Product, ModuleName, ThemeName, Toast } from '@/types/dashboard';
-import { parseRow } from '@/utils/dataParser';
+import { fetchSheetData } from '@/lib/sheets-api';
 
 const SHEET_ID = '1V0-yWzGbDWUEQ21CPtNcHrzPQfLTXKHNBYUlSfzO2Pc';
 
@@ -114,7 +113,17 @@ export function useDashboardData() {
           
           if (cacheAge < CACHE_DURATION) {
             console.log('📦 Usando dados do cache (idade:', Math.round(cacheAge / 1000), 'segundos)');
-            parseAndSetData(cachedData);
+            
+            // Converter ProductData[] para AllData
+            const newData: AllData = {};
+            cachedData.forEach((product: any) => {
+              newData[product.name] = {
+                semanas: product.weeks,
+                tendencia: product.tendencia
+              };
+            });
+            
+            setAllData(newData);
             setLoading(false);
             showToast('Dados carregados do cache', 'success', 2000);
             return;
@@ -124,56 +133,29 @@ export function useDashboardData() {
         }
       }
 
-      // Buscar dados via Edge Function (que tem acesso à service account)
-      console.log('🔄 Buscando dados da API via Edge Function...');
+      // Buscar dados DIRETAMENTE da Google Sheets API (SEM Edge Functions!)
+      console.log('🎯 Iniciando busca de dados para:', month.name);
       
-      // Mapear o nome do mês para o nome real da aba na planilha
-      const sheetName = SHEET_NAMES[month.name];
-      if (!sheetName) {
-        throw new Error(`Mês não mapeado: ${month.name}`);
-      }
+      const productsData = await fetchSheetData(month.name);
       
-      const fullRange = `${sheetName}!A1:Q100`;
-      console.log('📋 Mês:', month.name, '| Aba:', sheetName, '| Range:', fullRange);
-      
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-sheets-data`;
-      
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          range: fullRange
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Erro na resposta da edge function:', response.status, errorText);
-        throw new Error(`Erro ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('📥 Resposta da edge function:', result);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Erro ao buscar dados');
-      }
-
-      if (!result.data || !Array.isArray(result.data)) {
-        throw new Error('Formato de dados inválido recebido da API');
-      }
-
-      console.log(`✅ Dados recebidos: ${result.data.length} linhas`);
+      console.log(`✅ Dados recebidos com sucesso! ${productsData.length} produtos`);
 
       // Salvar em cache
       localStorage.setItem(cacheKey, JSON.stringify({
-        data: result.data,
+        data: productsData,
         timestamp: Date.now()
       }));
 
-      parseAndSetData(result.data);
+      // Converter ProductData[] para AllData
+      const newData: AllData = {};
+      productsData.forEach(product => {
+        newData[product.name] = {
+          semanas: product.weeks,
+          tendencia: product.tendencia
+        };
+      });
+
+      setAllData(newData);
       setLoading(false);
       showToast('Dados carregados com sucesso!', 'success', 2000);
       
@@ -184,46 +166,6 @@ export function useDashboardData() {
       setLoading(false);
     }
   }, [currentMonth, showToast]);
-
-  // Função auxiliar para processar dados
-  const parseAndSetData = useCallback((data: any[][]) => {
-    const newData: AllData = {};
-    const productRanges: Record<string, { start: number; end: number; tendencia: number }> = {
-      'Geral': { start: 1, end: 4, tendencia: 5 },
-      '50 Scripts': { start: 22, end: 25, tendencia: 26 },
-      'Teste': { start: 29, end: 32, tendencia: 33 },
-      'IA Julia': { start: 36, end: 39, tendencia: 40 },
-      'MPM': { start: 43, end: 45, tendencia: 46 },
-      'Couply': { start: 8, end: 11, tendencia: 12 },
-      'Autentiq': { start: 15, end: 18, tendencia: 19 },
-      'Mentoria Julia': { start: 50, end: 53, tendencia: 54 },
-      'Social Selling CL': { start: 57, end: 60, tendencia: 61 },
-      'Social Selling JU': { start: 64, end: 67, tendencia: 68 },
-    };
-
-    for (const [productName, range] of Object.entries(productRanges)) {
-      const semanas = [];
-      for (let i = range.start; i <= range.end; i++) {
-        const row = data[i];
-        if (!row) continue;
-        const rowData = parseRow(row);
-        semanas.push(rowData);
-      }
-
-      const tendenciaRow = data[range.tendencia];
-      let tendencia = null;
-      if (tendenciaRow) {
-        tendencia = parseRow(tendenciaRow);
-        if (tendencia.lucroFunil === 0 && tendencia.faturamentoFunil > 0) {
-          tendencia.lucroFunil = tendencia.faturamentoFunil - tendencia.investido;
-        }
-      }
-
-      newData[productName] = { semanas, tendencia };
-    }
-
-    setAllData(newData);
-  }, []);
 
   useEffect(() => {
     loadData();
