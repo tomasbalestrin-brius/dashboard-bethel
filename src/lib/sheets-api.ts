@@ -1,7 +1,7 @@
 // src/lib/sheets-api.ts
 // Fetch DIRETO da Google Sheets API (SEM Edge Functions!)
 
-const SPREADSHEET_ID = '1V0-yWzGbDWUEQ21CPtNcHrzPQfLTXKHNBYUlSfzO2Pc';
+const SPREADSHEET_ID = '1XsdWQNR7FUo4TrrhsMjSGESS3PtS9G7X8FoHHStxLtU';
 const API_KEY = import.meta.env.VITE_GOOGLE_SHEETS_API_KEY;
 
 const SHEET_NAMES: Record<string, string> = {
@@ -12,23 +12,23 @@ const SHEET_NAMES: Record<string, string> = {
 };
 
 export interface WeekData {
+  investido: number;
+  faturamentoTrafego: number;
+  roasTrafego: number;
   alunos: number;
   qualificados: number;
   agendados: number;
+  taxaAgendamento: number;
   callRealizada: number;
+  taxaComparecimento: number;
   numeroVenda: number;
-  investido: number;
-  faturamentoTrafego: number;
-  faturamentoFunil: number;
-  roasTrafego: number;
-  roasFunil: number;
+  taxaConversao: number;
+  taxaAscensao: number;
   vendaMonetizacao: number;
   entradas: number;
+  faturamentoFunil: number;
   lucroFunil: number;
-  taxaConversao: number;
-  taxaAgendamento: number;
-  taxaComparecimento: number;
-  taxaAscensao: number;
+  roasFunil: number;
 }
 
 export interface ProductData {
@@ -38,77 +38,100 @@ export interface ProductData {
 }
 
 function parseValue(val: any): number {
-  if (!val || val === '#N/A' || val === '#DIV/0!' || val === '' || val === '#NUM!') {
+  if (!val || val === '#N/A' || val === '#DIV/0!' || val === '' || val === '#NUM!' || val === '-') {
     return 0;
   }
   
   let cleanVal = val.toString().replace(/[^\d,.-]/g, '');
-  cleanVal = cleanVal.replace(/\./g, '');
-  cleanVal = cleanVal.replace(',', '.');
+  cleanVal = cleanVal.replace(/\./g, ''); // Remove pontos de milhar
+  cleanVal = cleanVal.replace(',', '.'); // Substitui vírgula por ponto
   
   return parseFloat(cleanVal) || 0;
 }
 
 function parseRow(row: any[]): WeekData {
-  const investido = parseValue(row[1]);
-  const faturamentoTrafego = parseValue(row[2]);
-  const faturamentoFunil = parseValue(row[15]);
-  
-  const roasTrafego = parseValue(row[3]);
+  const investido = parseValue(row[2]);
+  const faturamentoFunil = parseValue(row[16]);
   const roasFunil = investido > 0 ? (faturamentoFunil / investido) : 0;
   
   return {
-    investido,
-    faturamentoTrafego,
-    roasTrafego,
-    alunos: parseValue(row[4]),
-    qualificados: parseValue(row[5]),
-    agendados: parseValue(row[6]),
-    taxaAgendamento: parseValue(row[7]),
-    callRealizada: parseValue(row[8]),
-    taxaComparecimento: parseValue(row[9]),
-    numeroVenda: parseValue(row[10]),
-    taxaConversao: parseValue(row[11]),
-    taxaAscensao: parseValue(row[12]),
-    vendaMonetizacao: parseValue(row[13]),
-    entradas: parseValue(row[14]),
-    faturamentoFunil,
-    lucroFunil: parseValue(row[16]),
-    roasFunil
+    investido,                               // Coluna C
+    faturamentoTrafego: parseValue(row[3]),  // Coluna D
+    roasTrafego: parseValue(row[4]),         // Coluna E
+    alunos: parseValue(row[5]),              // Coluna F
+    qualificados: parseValue(row[6]),        // Coluna G
+    agendados: parseValue(row[7]),           // Coluna H
+    taxaAgendamento: parseValue(row[8]),     // Coluna I
+    callRealizada: parseValue(row[9]),       // Coluna J
+    taxaComparecimento: parseValue(row[10]), // Coluna K
+    numeroVenda: parseValue(row[11]),        // Coluna L
+    taxaConversao: parseValue(row[12]),      // Coluna M
+    taxaAscensao: parseValue(row[13]),       // Coluna N
+    vendaMonetizacao: parseValue(row[14]),   // Coluna O
+    entradas: parseValue(row[15]),           // Coluna P
+    faturamentoFunil,                        // Coluna Q
+    lucroFunil: parseValue(row[17]),         // Coluna R
+    roasFunil                                // Calculado
   };
 }
 
 function parseSheetData(rows: any[][]): ProductData[] {
-  const productRanges = {
-    'Geral': { start: 1, end: 4, tendencia: 5 },
-    'Couply': { start: 8, end: 11, tendencia: 12 },
-    '50 Scripts': { start: 22, end: 25, tendencia: 26 },
-    'Teste': { start: 29, end: 32, tendencia: 33 },
-    'IA Julia': { start: 36, end: 39, tendencia: 40 },
-    'MPM': { start: 43, end: 45, tendencia: 46 }
-  };
-
-  return Object.entries(productRanges).map(([name, range]) => {
-    const weeks: WeekData[] = [];
+  const products: ProductData[] = [];
+  
+  // Começar da linha 1 (índice 1), pulando o header (índice 0)
+  let i = 1;
+  
+  while (i < rows.length) {
+    const row = rows[i];
     
-    for (let i = range.start; i <= range.end; i++) {
-      if (rows[i]) {
-        weeks.push(parseRow(rows[i]));
+    // Verificar se tem nome do funil na coluna A
+    if (!row[0]) {
+      i++;
+      continue;
+    }
+    
+    const productName = row[0].toString().trim();
+    const weeks: WeekData[] = [];
+    let tendencia: WeekData | null = null;
+    
+    console.log(`📦 Processando produto: ${productName} (linha ${i + 1})`);
+    
+    // Ler as próximas 5 linhas (4 semanas + 1 tendência)
+    for (let j = 0; j < 5 && (i + j) < rows.length; j++) {
+      const currentRow = rows[i + j];
+      const periodo = currentRow[1]?.toString().toLowerCase() || '';
+      
+      // Verificar se é tendência
+      if (periodo.includes('tendência') || periodo.includes('tendencia')) {
+        tendencia = parseRow(currentRow);
+        console.log(`  📈 Tendência encontrada (linha ${i + j + 1})`);
+      } else if (periodo.includes('semana')) {
+        const weekData = parseRow(currentRow);
+        weeks.push(weekData);
+        console.log(`  📅 ${currentRow[1]} (linha ${i + j + 1})`);
       }
     }
     
-    const tendencia = rows[range.tendencia] ? parseRow(rows[range.tendencia]) : null;
+    // Adicionar produto se tiver pelo menos 1 semana
+    if (weeks.length > 0) {
+      products.push({
+        name: productName,
+        weeks,
+        tendencia
+      });
+      console.log(`  ✅ ${productName}: ${weeks.length} semanas processadas`);
+    }
     
-    return {
-      name,
-      weeks,
-      tendencia
-    };
-  });
+    // Avançar 5 linhas (bloco completo)
+    i += 5;
+  }
+  
+  console.log(`✅ Total de produtos processados: ${products.length}`);
+  return products;
 }
 
 export async function fetchSheetData(month: string): Promise<ProductData[]> {
-  console.log('🔄 Buscando dados DIRETAMENTE da Google Sheets API (SEM Edge Functions)');
+  console.log('🔄 Buscando dados DIRETAMENTE da Google Sheets API');
   console.log('📅 Mês:', month);
   
   if (!API_KEY) {
@@ -120,7 +143,7 @@ export async function fetchSheetData(month: string): Promise<ProductData[]> {
     throw new Error(`Mês inválido: ${month}. Use: ${Object.keys(SHEET_NAMES).join(', ')}`);
   }
   
-  const range = `${sheetName}!A1:Q100`;
+  const range = `${sheetName}!A1:R200`;
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodedRange}?key=${API_KEY}`;
   
