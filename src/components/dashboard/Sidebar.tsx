@@ -2,6 +2,7 @@ import type { ModuleName } from '@/types/dashboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { LayoutDashboard, FileText, TrendingUp, DollarSign, Lightbulb, GitCompare, Calendar, Download, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { OrganizationLogo } from './OrganizationLogo';
 
 interface SidebarProps {
   currentModule: ModuleName;
@@ -39,15 +40,7 @@ export function Sidebar({ currentModule, onModuleChange, mobileMenuOpen, onClose
     >
       {/* Logo */}
       <div className="h-[76px] flex items-center px-6 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-            D
-          </div>
-          <div>
-            <div className="font-bold text-foreground">Dashboard</div>
-            <div className="text-xs text-muted-foreground">Analytics</div>
-          </div>
-        </div>
+        <OrganizationLogo />
       </div>
 
       {/* Navigation */}

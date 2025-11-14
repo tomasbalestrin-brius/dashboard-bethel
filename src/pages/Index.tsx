@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useBranding } from '@/hooks/useBranding';
 import { ThemeSelector } from '@/components/dashboard/ThemeSelector';
 import { ResponsiveSidebar } from '@/components/dashboard/ResponsiveSidebar';
 import { BottomNav } from '@/components/dashboard/BottomNav';
@@ -15,8 +16,11 @@ import { ComparacaoModule } from '@/components/dashboard/modules/OtherModules';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { UserMenu } from '@/components/UserMenu';
+import { OrganizationSwitcher } from '@/components/dashboard/OrganizationSwitcher';
 
 const Index = () => {
+  useBranding(); // Aplicar branding da organização
+  
   const {
     allData,
     currentMonth,

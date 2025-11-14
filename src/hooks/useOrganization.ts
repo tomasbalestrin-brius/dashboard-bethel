@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseTyped as supabase } from '@/lib/supabase-typed';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -49,7 +49,7 @@ export const useOrganization = () => {
 
     try {
       // Buscar organização atual do profile
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError} = await supabase
         .from('profiles')
         .select('current_organization_id')
         .eq('id', user.id)

@@ -84,6 +84,13 @@ export function UserMenu() {
             <span>Meu Perfil</span>
           </DropdownMenuItem>
         </Link>
+
+        <Link to="/team">
+          <DropdownMenuItem className="cursor-pointer">
+            <User className="mr-2 h-4 w-4" />
+            <span>Equipe</span>
+          </DropdownMenuItem>
+        </Link>
         
         <DropdownMenuSeparator className="bg-slate-800" />
         
