@@ -1,6 +1,8 @@
 import { MonthSelector } from '../MonthSelector';
 import { ALL_PRODUCTS } from '@/hooks/useDashboardData';
+import { GoogleSheetsButton } from '@/components/dashboard/GoogleSheetsButton';
 import type { AllData } from '@/types/dashboard';
+import { MODULE_SYNC_CONFIGS } from '@/types/googleSheets';
 
 interface ResumoModuleProps {
   allData: AllData;
@@ -20,6 +22,29 @@ export function ResumoModule({ allData, currentMonth, onMonthSelect }: ResumoMod
         <p className="text-xl text-[hsl(var(--text-secondary))] mb-2.5 max-md:text-sm">
           Visão Consolidada de Todos os Funis
         </p>
+      </div>
+
+      <div className="flex justify-center mb-4">
+        <GoogleSheetsButton
+          moduleName="resumo"
+          data={produtos.flatMap(product => {
+            const data = allData[product.id];
+            if (!data) return [];
+            const { semanas } = data;
+            const faturamentoFunil = semanas.reduce((sum, s) => sum + s.faturamentoFunil, 0);
+            const lucroFunil = semanas.reduce((sum, s) => sum + s.lucroFunil, 0);
+            const investimento = semanas.reduce((sum, s) => sum + s.investido, 0);
+            return [{
+              Data: currentMonth,
+              Produto: product.name,
+              Faturamento: faturamentoFunil,
+              Lucro: lucroFunil,
+              Investimento: investimento,
+              ROI: investimento > 0 ? ((faturamentoFunil / investimento) * 100).toFixed(2) : 0,
+            }];
+          })}
+          syncConfig={MODULE_SYNC_CONFIGS['resumo']!}
+        />
       </div>
 
       <MonthSelector currentMonth={currentMonth} onMonthSelect={onMonthSelect} />

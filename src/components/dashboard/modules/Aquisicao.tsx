@@ -9,8 +9,10 @@ import { Save, TrendingUp } from 'lucide-react';
 import { useAcquisitionFunnels } from '@/hooks/useAcquisitionFunnels';
 import { FunnelSelector, toFunnelOptions } from '@/components/dashboard/FunnelSelector';
 import { AddAcquisitionFunnelModal } from '@/components/dashboard/modals/AddAcquisitionFunnelModal';
+import { GoogleSheetsButton } from '@/components/dashboard/GoogleSheetsButton';
 import type { FunnelViewMode, AcquisitionFunnelDataInput, MonthCode } from '@/types/funnel';
 import { MONTHS } from '@/types/funnel';
+import { MODULE_SYNC_CONFIGS } from '@/types/googleSheets';
 
 interface AquisicaoModuleProps {
   currentMonth?: string;
@@ -229,7 +231,24 @@ export function AquisicaoModule({ currentMonth = 'jan', onMonthSelect }: Aquisic
           loading={loadingFunnels}
         />
 
-        <AddAcquisitionFunnelModal />
+        <div className="flex gap-2">
+          <GoogleSheetsButton
+            moduleName="aquisicao"
+            data={funnelData.map((d) => ({
+              Data: `${MONTHS[d.month]}/${d.year}`,
+              Funil: currentFunnel?.name || '',
+              'Total Leads': d.total_leads,
+              'Leads Qualificados': d.qualified_leads,
+              Agendados: d.scheduled,
+              'Calls Realizados': d.calls_done,
+              Vendas: d.sales,
+              Investimento: d.investment,
+              'Custo por Lead': d.cost_per_lead,
+            }))}
+            syncConfig={MODULE_SYNC_CONFIGS['aquisicao']!}
+          />
+          <AddAcquisitionFunnelModal />
+        </div>
       </div>
 
       {/* Main Content */}

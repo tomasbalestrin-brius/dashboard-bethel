@@ -10,8 +10,10 @@ import { useSDRFunnels } from '@/hooks/useSDRFunnels';
 import { useSDRData } from '@/hooks/useSDRData';
 import { FunnelSelector, toFunnelOptions } from '@/components/dashboard/FunnelSelector';
 import { AddSDRFunnelModal } from '@/components/dashboard/modals/AddSDRFunnelModal';
+import { GoogleSheetsButton } from '@/components/dashboard/GoogleSheetsButton';
 import type { FunnelViewMode, LeadClassification, SDRDataInput, MonthCode } from '@/types/funnel';
 import { LEAD_CLASSIFICATIONS, MONTHS } from '@/types/funnel';
+import { MODULE_SYNC_CONFIGS } from '@/types/googleSheets';
 
 interface SDRModuleProps {
   currentMonth?: string;
@@ -309,7 +311,72 @@ export function SDRModule({ currentMonth = 'jan', onMonthSelect }: SDRModuleProp
           loading={loadingFunnels}
         />
 
-        <AddSDRFunnelModal />
+        <div className="flex gap-2">
+          <GoogleSheetsButton
+            moduleName="sdr"
+            data={sdrData.map((d) => {
+              const metrics = getAllMetrics();
+              const monthMetrics = metrics.find(m => m.month === d.month && m.year === d.year);
+
+              return [
+                // Diamante
+                {
+                  Data: `${MONTHS[d.month]}/${d.year}`,
+                  'Funil SDR': currentFunnel?.name || '',
+                  'Classificação': 'Diamante',
+                  Leads: d.leads_diamante,
+                  Agendamentos: d.agendamentos_diamante,
+                  Calls: d.calls_diamante,
+                  Vendas: d.vendas_diamante,
+                  'Taxa Agendamento %': monthMetrics?.diamante.taxa_agendamento || 0,
+                  'Taxa Comparecimento %': monthMetrics?.diamante.taxa_comparecimento || 0,
+                  'Taxa Conversão %': monthMetrics?.diamante.taxa_conversao || 0,
+                },
+                // Ouro
+                {
+                  Data: `${MONTHS[d.month]}/${d.year}`,
+                  'Funil SDR': currentFunnel?.name || '',
+                  'Classificação': 'Ouro',
+                  Leads: d.leads_ouro,
+                  Agendamentos: d.agendamentos_ouro,
+                  Calls: d.calls_ouro,
+                  Vendas: d.vendas_ouro,
+                  'Taxa Agendamento %': monthMetrics?.ouro.taxa_agendamento || 0,
+                  'Taxa Comparecimento %': monthMetrics?.ouro.taxa_comparecimento || 0,
+                  'Taxa Conversão %': monthMetrics?.ouro.taxa_conversao || 0,
+                },
+                // Prata
+                {
+                  Data: `${MONTHS[d.month]}/${d.year}`,
+                  'Funil SDR': currentFunnel?.name || '',
+                  'Classificação': 'Prata',
+                  Leads: d.leads_prata,
+                  Agendamentos: d.agendamentos_prata,
+                  Calls: d.calls_prata,
+                  Vendas: d.vendas_prata,
+                  'Taxa Agendamento %': monthMetrics?.prata.taxa_agendamento || 0,
+                  'Taxa Comparecimento %': monthMetrics?.prata.taxa_comparecimento || 0,
+                  'Taxa Conversão %': monthMetrics?.prata.taxa_conversao || 0,
+                },
+                // Bronze
+                {
+                  Data: `${MONTHS[d.month]}/${d.year}`,
+                  'Funil SDR': currentFunnel?.name || '',
+                  'Classificação': 'Bronze',
+                  Leads: d.leads_bronze,
+                  Agendamentos: d.agendamentos_bronze,
+                  Calls: d.calls_bronze,
+                  Vendas: d.vendas_bronze,
+                  'Taxa Agendamento %': monthMetrics?.bronze.taxa_agendamento || 0,
+                  'Taxa Comparecimento %': monthMetrics?.bronze.taxa_comparecimento || 0,
+                  'Taxa Conversão %': monthMetrics?.bronze.taxa_conversao || 0,
+                },
+              ];
+            }).flat()}
+            syncConfig={MODULE_SYNC_CONFIGS['sdr']!}
+          />
+          <AddSDRFunnelModal />
+        </div>
       </div>
 
       {/* Main Content */}
