@@ -55,6 +55,7 @@ export type ModuleName =
   | 'roi'
   | 'custos'
   | 'insights'
+  | 'sdr'
   | 'exportar';
 
 export type ThemeName = 'dark' | 'light' | 'blue' | 'green' | 'purple';
