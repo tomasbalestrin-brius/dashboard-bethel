@@ -55,6 +55,7 @@ export type ModuleName =
   | 'roi'
   | 'custos'
   | 'insights'
+  | 'aquisicao'
   | 'sdr'
   | 'exportar';
 
