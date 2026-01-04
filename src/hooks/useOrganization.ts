@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabaseTyped as supabase } from '@/lib/supabase-typed';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import type { UserRole, ModuleType } from '@/types/auth';
 
 export interface Organization {
   id: string;
@@ -23,7 +24,7 @@ export interface Organization {
 
 export interface OrganizationMember {
   id: string;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
+  role: UserRole;
   joined_at: string;
   user_id: string;
 }
@@ -33,7 +34,7 @@ export const useOrganization = () => {
   const { toast } = useToast();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
-  const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'viewer' | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,7 +82,7 @@ export const useOrganization = () => {
         .single();
 
       if (memberError) throw memberError;
-      setUserRole((membership?.role as 'owner' | 'admin' | 'member' | 'viewer') || null);
+      setUserRole((membership?.role as UserRole) || null);
 
       // Buscar membros (se admin)
       if (membership?.role && ['owner', 'admin'].includes(membership.role)) {
@@ -208,7 +209,7 @@ export const useOrganization = () => {
     }
   };
 
-  const inviteMember = async (email: string, role: 'admin' | 'member' | 'viewer') => {
+  const inviteMember = async (email: string, role: Exclude<UserRole, 'owner'>) => {
     if (!organization || !user) return { success: false };
 
     try {
@@ -283,7 +284,7 @@ export const useOrganization = () => {
     }
   };
 
-  const updateMemberRole = async (memberId: string, newRole: 'admin' | 'member' | 'viewer') => {
+  const updateMemberRole = async (memberId: string, newRole: Exclude<UserRole, 'owner'>) => {
     if (!organization) return { success: false };
 
     try {
@@ -312,10 +313,73 @@ export const useOrganization = () => {
     }
   };
 
+  // Funções auxiliares de permissão
   const isOwner = userRole === 'owner';
   const isAdmin = userRole ? ['owner', 'admin'].includes(userRole) : false;
+  const isGestor = userRole === 'gestor';
+  const isSDR = userRole === 'sdr';
+  const isComercial = userRole === 'comercial';
   const canManageMembers = isAdmin;
   const canManageSettings = isAdmin;
+
+  // Verificar se usuário pode acessar um módulo específico
+  const canAccessModule = async (moduleName: ModuleType): Promise<boolean> => {
+    if (!user || !organization) return false;
+
+    try {
+      const { data, error } = await supabase.rpc('user_can_access_module', {
+        _user_id: user.id,
+        _org_id: organization.id,
+        _module_name: moduleName
+      });
+
+      if (error) throw error;
+      return data as boolean;
+    } catch (error) {
+      console.error('Error checking module access:', error);
+      return false;
+    }
+  };
+
+  // Verificar se usuário pode editar um módulo específico
+  const canEditModule = async (moduleName: ModuleType): Promise<boolean> => {
+    if (!user || !organization) return false;
+
+    try {
+      const { data, error } = await supabase.rpc('user_can_edit_module', {
+        _user_id: user.id,
+        _org_id: organization.id,
+        _module_name: moduleName
+      });
+
+      if (error) throw error;
+      return data as boolean;
+    } catch (error) {
+      console.error('Error checking module edit permission:', error);
+      return false;
+    }
+  };
+
+  // Verificação rápida de permissões baseada apenas no role (sem chamada ao banco)
+  const hasQuickAccess = (moduleName: ModuleType): boolean => {
+    if (!userRole) return false;
+
+    // Owner e Admin têm acesso a tudo
+    if (isOwner || isAdmin) return true;
+
+    // Mapeamento de permissões por role
+    const rolePermissions: Record<UserRole, ModuleType[]> = {
+      owner: ['dashboard', 'resumo', 'roi', 'custos', 'insights', 'comparar-funis', 'exportar', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
+      admin: ['dashboard', 'resumo', 'roi', 'custos', 'insights', 'comparar-funis', 'exportar', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
+      gestor: ['dashboard', 'resumo', 'sdr', 'monetizacao', 'exportar'],
+      sdr: ['sdr', 'exportar'],
+      comercial: ['monetizacao', 'exportar'],
+      member: ['dashboard', 'resumo', 'roi', 'custos', 'insights', 'comparar-funis', 'exportar'],
+      viewer: ['dashboard', 'resumo'],
+    };
+
+    return rolePermissions[userRole]?.includes(moduleName) || false;
+  };
 
   return {
     organization,
@@ -324,8 +388,14 @@ export const useOrganization = () => {
     loading,
     isOwner,
     isAdmin,
+    isGestor,
+    isSDR,
+    isComercial,
     canManageMembers,
     canManageSettings,
+    canAccessModule,
+    canEditModule,
+    hasQuickAccess,
     updateOrganization,
     switchOrganization,
     inviteMember,

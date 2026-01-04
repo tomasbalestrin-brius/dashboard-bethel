@@ -52,7 +52,6 @@ export type ModuleName =
   | 'dashboard'
   | 'resumo'
   | 'comparar-funis'
-  | 'comparacao'
   | 'roi'
   | 'custos'
   | 'insights'
