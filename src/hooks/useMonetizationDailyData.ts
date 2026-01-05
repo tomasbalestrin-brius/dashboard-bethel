@@ -96,11 +96,14 @@ export function useMonetizationDailyData(): UseMonetizationDailyDataReturn {
   };
 
   // Get data by period
-  const getDataByPeriod = async (
+  const getDataByPeriod = useCallback(async (
     startDate: string,
     endDate: string
   ): Promise<MonetizationDailyData[]> => {
-    if (!organization) return [];
+    if (!organization) {
+      console.log('No organization available for getDataByPeriod');
+      return [];
+    }
 
     try {
       const { data, error: fetchError } = await supabase
@@ -116,9 +119,14 @@ export function useMonetizationDailyData(): UseMonetizationDailyDataReturn {
       return data || [];
     } catch (err: any) {
       console.error('Error fetching Monetization data by period:', err);
+      toast({
+        title: 'Erro ao carregar dados',
+        description: err.message,
+        variant: 'destructive',
+      });
       return [];
     }
-  };
+  }, [organization, toast]);
 
   // Insert new data
   const insertData = async (
