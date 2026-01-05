@@ -15,7 +15,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMonetizationDailyData } from '@/hooks/useMonetizationDailyData';
 import type { MonetizationDailyDataInput } from '@/types/dailyData';
-import { formatDateForDB, formatCurrency } from '@/utils/metricsCalculations';
+import { formatDateForDB } from '@/types/dailyData';
+import { formatCurrency } from '@/utils/metricsCalculations';
 
 export function MonetizationDailyInput() {
   const { getDataByDate, insertData, updateData, loading } = useMonetizationDailyData();

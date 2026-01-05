@@ -57,6 +57,7 @@ export type ModuleName =
   | 'insights'
   | 'aquisicao'
   | 'sdr'
+  | 'monetizacao'
   | 'exportar';
 
 export type ThemeName = 'dark' | 'light' | 'blue' | 'green' | 'purple';

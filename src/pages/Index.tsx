@@ -14,6 +14,7 @@ import { CompararFunisModule } from '@/components/dashboard/modules/CompararFuni
 import { ExportarModule } from '@/components/dashboard/modules/Exportar';
 import { AquisicaoModule } from '@/components/dashboard/modules/Aquisicao';
 import { SDRModule } from '@/components/dashboard/modules/SDR';
+import { MonetizationModule } from '@/components/dashboard/modules/Monetization';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { UserMenu } from '@/components/UserMenu';
@@ -90,6 +91,7 @@ const Index = () => {
               {currentModule === 'comparar-funis' && <CompararFunisModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
               {currentModule === 'aquisicao' && <AquisicaoModule currentMonth={currentMonth} onMonthSelect={selectMonth} />}
               {currentModule === 'sdr' && <SDRModule currentMonth={currentMonth} onMonthSelect={selectMonth} />}
+              {currentModule === 'monetizacao' && <MonetizationModule currentMonth={currentMonth} onMonthSelect={selectMonth} />}
               {currentModule === 'exportar' && <ExportarModule />}
             </>
           )}

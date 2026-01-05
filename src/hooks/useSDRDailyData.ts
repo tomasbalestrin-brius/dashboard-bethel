@@ -8,10 +8,10 @@ import type {
   AggregatedSDRData,
   PeriodData,
 } from '@/types/dailyData';
+import { formatDateForDB } from '@/types/dailyData';
 import {
   aggregateSDRData,
   validateSDRDailyData,
-  formatDateForDB,
 } from '@/utils/metricsCalculations';
 
 interface UseSDRDailyDataReturn {
