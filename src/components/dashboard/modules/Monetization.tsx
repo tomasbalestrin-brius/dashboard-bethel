@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { PeriodSelector } from '@/components/dashboard/PeriodSelector';
 import { MonetizationDailyInput } from '@/components/dashboard/monetization/MonetizationDailyInput';
@@ -14,7 +14,6 @@ import {
   formatCurrency,
   formatNumber,
 } from '@/utils/metricsCalculations';
-import { useEffect } from 'react';
 
 interface MonetizationModuleProps {
   currentMonth?: string;
@@ -24,30 +23,41 @@ interface MonetizationModuleProps {
 export function MonetizationModule({ currentMonth, onMonthSelect }: MonetizationModuleProps) {
   const { getDataByPeriod, refreshData } = useMonetizationDailyData();
 
-  const [period, setPeriod] = useState<PeriodData>(getPeriodDates('last30days'));
+  // Use function initializer to avoid creating new object on every render
+  const [period, setPeriod] = useState<PeriodData>(() => getPeriodDates('last30days'));
   const [aggregatedData, setAggregatedData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  // Memoize period dates to prevent unnecessary re-renders
+  const periodDates = useMemo(() => ({
+    startDate: period.startDate.toISOString().split('T')[0],
+    endDate: period.endDate.toISOString().split('T')[0],
+  }), [period.startDate, period.endDate]);
 
   // Load data for selected period
   useEffect(() => {
     const loadData = async () => {
+      if (!getDataByPeriod) {
+        console.log('getDataByPeriod not available yet');
+        return;
+      }
+
       setLoading(true);
       try {
-        const startDate = period.startDate.toISOString().split('T')[0];
-        const endDate = period.endDate.toISOString().split('T')[0];
-
-        const data = await getDataByPeriod(startDate, endDate);
+        const data = await getDataByPeriod(periodDates.startDate, periodDates.endDate);
         const aggregated = aggregateMonetizationData(data, period);
         setAggregatedData(aggregated);
       } catch (error) {
         console.error('Error loading monetization data:', error);
+        setAggregatedData(null);
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [period, getDataByPeriod]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodDates.startDate, periodDates.endDate]);
 
   const metrics = aggregatedData
     ? calculateMonetizationMetrics(aggregatedData)
