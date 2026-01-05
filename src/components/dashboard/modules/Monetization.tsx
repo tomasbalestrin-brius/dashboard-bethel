@@ -4,6 +4,7 @@ import { PeriodSelector } from '@/components/dashboard/PeriodSelector';
 import { MonetizationDailyInput } from '@/components/dashboard/monetization/MonetizationDailyInput';
 import { MetricCard } from '@/components/dashboard/metrics/MetricCard';
 import { MetricSection } from '@/components/dashboard/metrics/MetricSection';
+import { GoogleSheetsButton } from '@/components/dashboard/GoogleSheetsButton';
 import { DollarSign, TrendingUp, Users, Coins } from 'lucide-react';
 import { useMonetizationDailyData } from '@/hooks/useMonetizationDailyData';
 import { getPeriodDates } from '@/types/dailyData';
@@ -71,11 +72,17 @@ export function MonetizationModule({ currentMonth, onMonthSelect }: Monetization
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-2">💰 Monetização</h1>
-        <p className="text-muted-foreground">
-          Acompanhe faturamento, entrada e receita por aluno
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">💰 Monetização</h1>
+          <p className="text-muted-foreground">
+            Acompanhe faturamento, entrada e receita por aluno
+          </p>
+        </div>
+        <GoogleSheetsButton
+          moduleName="monetizacao"
+          variant="outline"
+        />
       </div>
 
       {/* Period Selector */}
