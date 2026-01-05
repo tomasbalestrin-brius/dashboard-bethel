@@ -72,9 +72,24 @@ export const useOrganization = () => {
         .from('organizations')
         .select('*')
         .eq('id', profile.current_organization_id)
-        .single();
+        .maybeSingle();
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error('Error fetching organization:', orgError);
+        throw orgError;
+      }
+
+      if (!org) {
+        console.log('Organization not found or no access, clearing current_organization_id');
+        // Limpar current_organization_id inválido do profile
+        await supabase
+          .from('profiles')
+          .update({ current_organization_id: null })
+          .eq('id', user.id);
+        setLoading(false);
+        return;
+      }
+
       setOrganization(org as Organization);
 
       // Buscar role do usuário
@@ -83,9 +98,25 @@ export const useOrganization = () => {
         .select('role')
         .eq('organization_id', profile.current_organization_id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error fetching membership:', memberError);
+        throw memberError;
+      }
+
+      if (!membership) {
+        console.log('User is not a member of the organization, clearing current_organization_id');
+        // Limpar current_organization_id se usuário não é membro
+        await supabase
+          .from('profiles')
+          .update({ current_organization_id: null })
+          .eq('id', user.id);
+        setOrganization(null);
+        setLoading(false);
+        return;
+      }
+
       setUserRole((membership?.role as UserRole) || null);
 
       // Buscar membros (se admin)
@@ -164,9 +195,14 @@ export const useOrganization = () => {
         .select('id')
         .eq('organization_id', orgId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (memberError || !membership) {
+      if (memberError) {
+        console.error('Error checking membership:', memberError);
+        throw memberError;
+      }
+
+      if (!membership) {
         throw new Error('Você não tem acesso a esta organização');
       }
 
