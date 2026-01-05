@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
@@ -87,7 +87,7 @@ export function UserMenu() {
 
         <Link to="/team">
           <DropdownMenuItem className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
+            <Users className="mr-2 h-4 w-4" />
             <span>Equipe</span>
           </DropdownMenuItem>
         </Link>

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabaseTyped as supabase } from '@/lib/supabase-typed';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -39,10 +39,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Mail, MoreVertical, Plus, Shield, Trash2, UserPlus, X } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  ArrowLeft,
+  Mail,
+  MoreVertical,
+  UserPlus,
+  X,
+  Shield,
+  Trash2,
+  Lock,
+  Unlock,
+  Activity,
+  Eye,
+  Edit,
+  LayoutDashboard,
+  FileText,
+  Target,
+  Headphones,
+  Coins,
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import type { UserRole } from '@/types/auth';
 
 interface MemberWithProfile {
   id: string;
@@ -67,28 +87,66 @@ interface Invitation {
   status: string;
 }
 
+interface ActivityLog {
+  id: string;
+  user_id: string;
+  action: string;
+  module: string;
+  created_at: string;
+  user_name: string;
+}
+
+const MODULE_ICONS = {
+  dashboard: LayoutDashboard,
+  resumo: FileText,
+  aquisicao: Target,
+  sdr: Headphones,
+  monetizacao: Coins,
+};
+
+const MODULE_LABELS = {
+  dashboard: 'Dashboard',
+  resumo: 'Resumo Geral',
+  aquisicao: 'Aquisição',
+  sdr: 'Gestão SDR',
+  monetizacao: 'Monetização',
+  settings: 'Configurações',
+};
+
+const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  owner: ['dashboard', 'resumo', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
+  admin: ['dashboard', 'resumo', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
+  gestor: ['dashboard', 'resumo', 'sdr', 'monetizacao'],
+  sdr: ['sdr', 'resumo'],
+  comercial: ['monetizacao', 'resumo'],
+  member: ['dashboard', 'resumo', 'aquisicao'],
+  viewer: ['dashboard', 'resumo'],
+};
+
 export default function Team() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const { organization, canManageMembers, userRole, removeMember, updateMemberRole, inviteMember } = useOrganization();
-  
+
   const [members, setMembers] = useState<MemberWithProfile[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberWithProfile | null>(null);
-  
+
   // Invite form
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'gestor' | 'sdr' | 'comercial' | 'member' | 'viewer'>('member');
   const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     if (organization) {
       fetchMembers();
       fetchInvitations();
+      fetchActivities();
     }
   }, [organization]);
 
@@ -152,6 +210,29 @@ export default function Team() {
     }
   };
 
+  const fetchActivities = async () => {
+    // Mock activities for now - in production, you would fetch from an activity_logs table
+    const mockActivities: ActivityLog[] = [
+      {
+        id: '1',
+        user_id: user?.id || '',
+        action: 'created',
+        module: 'sdr',
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+        user_name: 'Você',
+      },
+      {
+        id: '2',
+        user_id: '2',
+        action: 'updated',
+        module: 'monetizacao',
+        created_at: new Date(Date.now() - 7200000).toISOString(),
+        user_name: 'João Silva',
+      },
+    ];
+    setActivities(mockActivities);
+  };
+
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
 
@@ -178,7 +259,7 @@ export default function Team() {
     }
   };
 
-  const handleChangeRole = async (memberId: string, newRole: 'admin' | 'member' | 'viewer') => {
+  const handleChangeRole = async (memberId: string, newRole: 'admin' | 'gestor' | 'sdr' | 'comercial' | 'member' | 'viewer') => {
     const result = await updateMemberRole(memberId, newRole);
     if (result?.success) {
       await fetchMembers();
@@ -207,10 +288,13 @@ export default function Team() {
 
   const getRoleBadge = (role: string) => {
     const variants = {
-      owner: { variant: 'default' as const, label: 'Proprietário' },
-      admin: { variant: 'secondary' as const, label: 'Administrador' },
-      member: { variant: 'outline' as const, label: 'Membro' },
-      viewer: { variant: 'outline' as const, label: 'Visualizador' },
+      owner: { variant: 'default' as const, label: 'Proprietário', color: 'bg-purple-500' },
+      admin: { variant: 'secondary' as const, label: 'Administrador', color: 'bg-blue-500' },
+      gestor: { variant: 'outline' as const, label: 'Gestor', color: 'bg-green-500' },
+      sdr: { variant: 'outline' as const, label: 'SDR', color: 'bg-yellow-500' },
+      comercial: { variant: 'outline' as const, label: 'Comercial', color: 'bg-orange-500' },
+      member: { variant: 'outline' as const, label: 'Membro', color: 'bg-gray-500' },
+      viewer: { variant: 'outline' as const, label: 'Visualizador', color: 'bg-slate-500' },
     };
     const config = variants[role as keyof typeof variants] || variants.member;
     return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -218,9 +302,13 @@ export default function Team() {
 
   const getRoleDescription = (role: string) => {
     const descriptions = {
-      admin: 'Pode gerenciar membros e configurações',
-      member: 'Pode visualizar e editar dados',
-      viewer: 'Apenas visualização',
+      owner: 'Controle total da organização',
+      admin: 'Pode gerenciar membros e todos os módulos',
+      gestor: 'Gestão de equipe SDR e Monetização',
+      sdr: 'Gestão de dados SDR',
+      comercial: 'Gestão de dados de monetização',
+      member: 'Pode visualizar e editar dados de aquisição',
+      viewer: 'Apenas visualização do dashboard',
     };
     return descriptions[role as keyof typeof descriptions] || '';
   };
@@ -241,7 +329,7 @@ export default function Team() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto px-4 py-8">
+      <div className="container max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -253,9 +341,9 @@ export default function Team() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Equipe</h1>
+              <h1 className="text-3xl font-bold">👥 Gestão de Equipe</h1>
               <p className="text-muted-foreground mt-1">
-                {currentMemberCount} de {maxMembers} membros
+                {currentMemberCount} de {maxMembers} membros • {organization?.name}
               </p>
             </div>
           </div>
@@ -268,149 +356,274 @@ export default function Team() {
           )}
         </div>
 
-        {/* Members List */}
-        <Card className="p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Membros Ativos</h2>
-          
-          {members.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              Nenhum membro ainda
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {members.map((member) => {
-                const isCurrentUser = member.user_id === user?.id;
-                const isOwner = member.role === 'owner';
-                const canEdit = canManageMembers && !isCurrentUser && !isOwner;
+        <Tabs defaultValue="members" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="members">Membros</TabsTrigger>
+            <TabsTrigger value="permissions">Permissões por Role</TabsTrigger>
+            <TabsTrigger value="activity">Atividades Recentes</TabsTrigger>
+          </TabsList>
 
-                return (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    {/* Avatar */}
-                    {member.profiles.avatar_url ? (
-                      <img
-                        src={member.profiles.avatar_url}
-                        alt={member.profiles.full_name || 'Avatar'}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
-                        {(member.profiles.full_name || member.users.email)[0].toUpperCase()}
-                      </div>
-                    )}
+          {/* Members Tab */}
+          <TabsContent value="members" className="space-y-6">
+            {/* Members List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Membros Ativos</CardTitle>
+                <CardDescription>
+                  Gerencie os membros da sua organização e suas funções
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {members.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Nenhum membro ainda
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {members.map((member) => {
+                      const isCurrentUser = member.user_id === user?.id;
+                      const isOwner = member.role === 'owner';
+                      const canEdit = canManageMembers && !isCurrentUser && !isOwner;
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {member.profiles.full_name || member.users.email.split('@')[0]}
-                        </span>
-                        {isCurrentUser && (
-                          <Badge variant="outline" className="text-xs">
-                            Você
-                          </Badge>
+                      return (
+                        <div
+                          key={member.id}
+                          className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                        >
+                          {/* Avatar */}
+                          {member.profiles.avatar_url ? (
+                            <img
+                              src={member.profiles.avatar_url}
+                              alt={member.profiles.full_name || 'Avatar'}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                              {(member.profiles.full_name || member.users.email)[0].toUpperCase()}
+                            </div>
+                          )}
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {member.profiles.full_name || member.users.email.split('@')[0]}
+                              </span>
+                              {isCurrentUser && (
+                                <Badge variant="outline" className="text-xs">
+                                  Você
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {member.users.email}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Entrou {formatDistanceToNow(new Date(member.joined_at), {
+                                addSuffix: true,
+                                locale: ptBR
+                              })}
+                            </p>
+                          </div>
+
+                          {/* Role Badge */}
+                          <div className="text-right">
+                            {getRoleBadge(member.role)}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {ROLE_PERMISSIONS[member.role as UserRole]?.length || 0} módulos
+                            </p>
+                          </div>
+
+                          {/* Actions */}
+                          {canEdit && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleChangeRole(member.id, 'admin')}>
+                                  <Shield className="w-4 h-4 mr-2" />
+                                  Tornar Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleChangeRole(member.id, 'gestor')}>
+                                  Tornar Gestor
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleChangeRole(member.id, 'sdr')}>
+                                  Tornar SDR
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleChangeRole(member.id, 'comercial')}>
+                                  Tornar Comercial
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleChangeRole(member.id, 'member')}>
+                                  Tornar Membro
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleChangeRole(member.id, 'viewer')}>
+                                  Tornar Visualizador
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => {
+                                    setSelectedMember(member);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Remover
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pending Invitations */}
+            {invitations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Convites Pendentes</CardTitle>
+                  <CardDescription>
+                    Aguardando aceitação dos convites enviados
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {invitations.map((invitation) => (
+                      <div
+                        key={invitation.id}
+                        className="flex items-center gap-4 p-4 rounded-lg border border-border"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                          <Mail className="w-6 h-6 text-muted-foreground" />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{invitation.email}</div>
+                          <p className="text-sm text-muted-foreground">
+                            Expira {formatDistanceToNow(new Date(invitation.expires_at), {
+                              addSuffix: true,
+                              locale: ptBR,
+                            })}
+                          </p>
+                        </div>
+
+                        <div>{getRoleBadge(invitation.role)}</div>
+
+                        {canManageMembers && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleCancelInvite(invitation.id)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {member.users.email}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Entrou {formatDistanceToNow(new Date(member.joined_at), { 
-                          addSuffix: true,
-                          locale: ptBR 
-                        })}
-                      </p>
-                    </div>
-
-                    {/* Role Badge */}
-                    <div>{getRoleBadge(member.role)}</div>
-
-                    {/* Actions */}
-                    {canEdit && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {member.role !== 'admin' && (
-                            <DropdownMenuItem
-                              onClick={() => handleChangeRole(member.id, 'admin')}
-                            >
-                              <Shield className="w-4 h-4 mr-2" />
-                              Promover a Admin
-                            </DropdownMenuItem>
-                          )}
-                          {member.role === 'admin' && (
-                            <DropdownMenuItem
-                              onClick={() => handleChangeRole(member.id, 'member')}
-                            >
-                              Rebaixar a Membro
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => {
-                              setSelectedMember(member);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Remover
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        {/* Pending Invitations */}
-        {invitations.length > 0 && (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Convites Pendentes</h2>
-            <div className="space-y-4">
-              {invitations.map((invitation) => (
-                <div
-                  key={invitation.id}
-                  className="flex items-center gap-4 p-4 rounded-lg border border-border"
-                >
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-muted-foreground" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium">{invitation.email}</div>
-                    <p className="text-sm text-muted-foreground">
-                      Expira {formatDistanceToNow(new Date(invitation.expires_at), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
-                    </p>
-                  </div>
-
-                  <div>{getRoleBadge(invitation.role)}</div>
-
-                  {canManageMembers && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCancelInvite(invitation.id)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+          {/* Permissions Tab */}
+          <TabsContent value="permissions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Permissões por Role</CardTitle>
+                <CardDescription>
+                  Veja quais módulos cada função pode acessar
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(ROLE_PERMISSIONS).map(([role, modules]) => (
+                    <Card key={role} className="border-2">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          {getRoleBadge(role)}
+                          <div className="text-sm text-muted-foreground">
+                            {modules.length} módulos
+                          </div>
+                        </div>
+                        <CardDescription className="mt-2">
+                          {getRoleDescription(role)}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {modules.map((module) => {
+                            const Icon = MODULE_ICONS[module as keyof typeof MODULE_ICONS] || LayoutDashboard;
+                            return (
+                              <div key={module} className="flex items-center gap-2 text-sm">
+                                <Icon className="w-4 h-4 text-primary" />
+                                <span>{MODULE_LABELS[module as keyof typeof MODULE_LABELS] || module}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity">
+            <Card>
+              <CardHeader>
+                <CardTitle>Atividades Recentes</CardTitle>
+                <CardDescription>
+                  Últimas ações realizadas pelos membros da equipe
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {activities.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhuma atividade registrada ainda</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {activities.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-start gap-4 p-4 rounded-lg border border-border"
+                      >
+                        <div className="w-2 h-2 mt-2 rounded-full bg-primary" />
+                        <div className="flex-1">
+                          <p className="text-sm">
+                            <span className="font-medium">{activity.user_name}</span>{' '}
+                            {activity.action === 'created' && 'criou dados em'}{' '}
+                            {activity.action === 'updated' && 'atualizou dados em'}{' '}
+                            {activity.action === 'deleted' && 'deletou dados em'}{' '}
+                            <span className="font-medium">
+                              {MODULE_LABELS[activity.module as keyof typeof MODULE_LABELS]}
+                            </span>
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDistanceToNow(new Date(activity.created_at), {
+                              addSuffix: true,
+                              locale: ptBR,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Invite Dialog */}
         <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
@@ -446,6 +659,30 @@ export default function Team() {
                         <div className="font-medium">Administrador</div>
                         <div className="text-xs text-muted-foreground">
                           {getRoleDescription('admin')}
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="gestor">
+                      <div>
+                        <div className="font-medium">Gestor</div>
+                        <div className="text-xs text-muted-foreground">
+                          {getRoleDescription('gestor')}
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sdr">
+                      <div>
+                        <div className="font-medium">SDR</div>
+                        <div className="text-xs text-muted-foreground">
+                          {getRoleDescription('sdr')}
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="comercial">
+                      <div>
+                        <div className="font-medium">Comercial</div>
+                        <div className="text-xs text-muted-foreground">
+                          {getRoleDescription('comercial')}
                         </div>
                       </div>
                     </SelectItem>
