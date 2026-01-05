@@ -33,44 +33,44 @@ export function PrimaryMetric({ value, subtitle, formula, className }: PrimaryMe
         className
       )}
     >
-      <CardContent className="p-8 text-center">
+      <CardContent className="p-6 text-center">
         {/* Star decoration */}
-        <div className="absolute top-4 right-4">
-          <Star className="w-8 h-8 text-yellow-500 fill-yellow-500 animate-pulse" />
+        <div className="absolute top-3 right-3">
+          <Star className="w-6 h-6 text-yellow-500 fill-yellow-500 animate-pulse" />
         </div>
 
         {/* Title */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <TrendingUp className="w-6 h-6 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <TrendingUp className="w-5 h-5 text-muted-foreground" />
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Indicador Principal
             </h3>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">{subtitle}</h2>
+          <h2 className="text-xl font-bold text-foreground">{subtitle}</h2>
         </div>
 
         {/* Value */}
         <div className="relative">
-          <div className={cn('text-8xl font-extrabold leading-none mb-4', getColorClass(value))}>
+          <div className={cn('text-6xl font-extrabold leading-none mb-3', getColorClass(value))}>
             {value.toFixed(2)}%
           </div>
 
           {/* Decorative elements */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-64 h-64 bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-3xl" />
+            <div className="w-48 h-48 bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-2xl" />
           </div>
         </div>
 
         {/* Formula */}
         {formula && (
-          <div className="mt-6 p-3 bg-muted/50 rounded-lg">
-            <p className="text-sm text-muted-foreground font-mono">{formula}</p>
+          <div className="mt-4 p-2 bg-muted/50 rounded-lg">
+            <p className="text-xs text-muted-foreground font-mono">{formula}</p>
           </div>
         )}
 
         {/* Progress bar */}
-        <div className="mt-6">
+        <div className="mt-4">
           <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
             <div
               className={cn(

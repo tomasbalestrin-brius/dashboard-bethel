@@ -51,14 +51,9 @@ export interface FunnelData {
 export type ModuleName =
   | 'dashboard'
   | 'resumo'
-  | 'comparar-funis'
-  | 'roi'
-  | 'custos'
-  | 'insights'
   | 'aquisicao'
   | 'sdr'
-  | 'monetizacao'
-  | 'exportar';
+  | 'monetizacao';
 
 export type ThemeName = 'dark' | 'light' | 'blue' | 'green' | 'purple';
 
