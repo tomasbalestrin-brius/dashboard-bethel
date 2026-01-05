@@ -369,12 +369,12 @@ export const useOrganization = () => {
 
     // Mapeamento de permissões por role
     const rolePermissions: Record<UserRole, ModuleType[]> = {
-      owner: ['dashboard', 'resumo', 'roi', 'custos', 'insights', 'comparar-funis', 'exportar', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
-      admin: ['dashboard', 'resumo', 'roi', 'custos', 'insights', 'comparar-funis', 'exportar', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
-      gestor: ['dashboard', 'resumo', 'sdr', 'monetizacao', 'exportar'],
-      sdr: ['sdr', 'exportar'],
-      comercial: ['monetizacao', 'exportar'],
-      member: ['dashboard', 'resumo', 'roi', 'custos', 'insights', 'comparar-funis', 'exportar'],
+      owner: ['dashboard', 'resumo', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
+      admin: ['dashboard', 'resumo', 'aquisicao', 'sdr', 'monetizacao', 'settings'],
+      gestor: ['dashboard', 'resumo', 'sdr', 'monetizacao'],
+      sdr: ['sdr', 'resumo'],
+      comercial: ['monetizacao', 'resumo'],
+      member: ['dashboard', 'resumo', 'aquisicao'],
       viewer: ['dashboard', 'resumo'],
     };
 
