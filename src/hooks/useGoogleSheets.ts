@@ -92,10 +92,22 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
   const createIntegration = async (
     input: GoogleSheetsIntegrationInput
   ): Promise<GoogleSheetsIntegration | null> => {
+    console.log('🔍 createIntegration - Verificando organization e user...', {
+      hasOrganization: !!organization,
+      hasUser: !!user,
+      organizationId: organization?.id,
+      userId: user?.id,
+    });
+
     if (!organization || !user) {
+      const errorMsg = !organization
+        ? 'Organização não encontrada. Aguarde o carregamento ou recarregue a página.'
+        : 'Usuário não encontrado. Faça login novamente.';
+
+      console.error('❌ createIntegration - Erro:', errorMsg);
       toast({
         title: 'Erro',
-        description: 'Organização ou usuário não encontrado',
+        description: errorMsg,
         variant: 'destructive',
       });
       return null;
@@ -103,6 +115,7 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
 
     try {
       setLoading(true);
+      console.log('📤 createIntegration - Criando integração...', input);
 
       const { data, error: insertError } = await supabase
         .from('google_sheets_integrations')
@@ -112,9 +125,18 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
           ...input,
         })
         .select()
-        .single();
+        .maybeSingle();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('❌ createIntegration - Erro no insert:', insertError);
+        throw insertError;
+      }
+
+      if (!data) {
+        throw new Error('Nenhum dado retornado após criar integração');
+      }
+
+      console.log('✅ createIntegration - Integração criada:', data);
 
       toast({
         title: 'Integração criada',
@@ -125,6 +147,7 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
       return data;
     } catch (err: any) {
       const errorMessage = err.message || 'Erro ao criar integração';
+      console.error('❌ createIntegration - Erro final:', errorMessage, err);
       setError(errorMessage);
       toast({
         title: 'Erro',
