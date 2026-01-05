@@ -72,8 +72,11 @@ export function useMonetizationDailyData(): UseMonetizationDailyDataReturn {
   }, [fetchData]);
 
   // Get data by specific date
-  const getDataByDate = async (date: string): Promise<MonetizationDailyData | null> => {
-    if (!organization) return null;
+  const getDataByDate = useCallback(async (date: string): Promise<MonetizationDailyData | null> => {
+    if (!organization) {
+      console.log('No organization available for getDataByDate');
+      return null;
+    }
 
     try {
       const { data, error: fetchError } = await supabase
@@ -81,11 +84,11 @@ export function useMonetizationDailyData(): UseMonetizationDailyDataReturn {
         .select('*')
         .eq('organization_id', organization.id)
         .eq('data_date', date)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
-        if (fetchError.code === 'PGRST116') return null; // No rows found
-        throw fetchError;
+        console.error('Error fetching data by date:', fetchError);
+        return null;
       }
 
       return data;
@@ -93,7 +96,7 @@ export function useMonetizationDailyData(): UseMonetizationDailyDataReturn {
       console.error('Error fetching Monetization data by date:', err);
       return null;
     }
-  };
+  }, [organization]);
 
   // Get data by period
   const getDataByPeriod = useCallback(async (
