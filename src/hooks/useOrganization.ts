@@ -54,11 +54,15 @@ export const useOrganization = () => {
         .from('profiles')
         .select('current_organization_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        throw profileError;
+      }
 
       if (!profile?.current_organization_id) {
+        console.log('User has no organization set');
         setLoading(false);
         return;
       }
