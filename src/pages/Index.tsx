@@ -12,7 +12,8 @@ import { CustosModule } from '@/components/dashboard/modules/Custos';
 import { InsightsModule } from '@/components/dashboard/modules/Insights';
 import { CompararFunisModule } from '@/components/dashboard/modules/CompararFunis';
 import { ExportarModule } from '@/components/dashboard/modules/Exportar';
-import { ComparacaoModule } from '@/components/dashboard/modules/OtherModules';
+import { AquisicaoModule } from '@/components/dashboard/modules/Aquisicao';
+import { SDRModule } from '@/components/dashboard/modules/SDR';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { UserMenu } from '@/components/UserMenu';
@@ -87,7 +88,8 @@ const Index = () => {
               {currentModule === 'custos' && <CustosModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
               {currentModule === 'insights' && <InsightsModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
               {currentModule === 'comparar-funis' && <CompararFunisModule allData={allData} currentMonth={currentMonth} onMonthSelect={selectMonth} />}
-              {currentModule === 'comparacao' && <ComparacaoModule />}
+              {currentModule === 'aquisicao' && <AquisicaoModule currentMonth={currentMonth} onMonthSelect={selectMonth} />}
+              {currentModule === 'sdr' && <SDRModule currentMonth={currentMonth} onMonthSelect={selectMonth} />}
               {currentModule === 'exportar' && <ExportarModule />}
             </>
           )}

@@ -1,4 +1,34 @@
-export type UserRole = 'admin' | 'team' | 'viewer';
+// Roles do sistema multi-tenant
+export type UserRole =
+  | 'owner'      // Proprietário da organização (máximo controle)
+  | 'admin'      // Administrador: acesso total + personalização
+  | 'gestor'     // Gestor: acesso a SDR + Monetização
+  | 'sdr'        // SDR: acesso apenas à seção SDR
+  | 'comercial'  // Comercial: acesso apenas à Monetização
+  | 'member'     // Membro genérico
+  | 'viewer';    // Visualizador (apenas leitura)
+
+// Tipos de módulos disponíveis
+export type ModuleType =
+  | 'dashboard'
+  | 'resumo'
+  | 'roi'
+  | 'custos'
+  | 'insights'
+  | 'comparar-funis'
+  | 'exportar'
+  | 'aquisicao'
+  | 'sdr'
+  | 'monetizacao'
+  | 'settings';
+
+// Interface de permissões de módulo
+export interface ModulePermission {
+  moduleName: ModuleType;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
 
 export interface User {
   id: number;

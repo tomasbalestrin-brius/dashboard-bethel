@@ -52,10 +52,11 @@ export type ModuleName =
   | 'dashboard'
   | 'resumo'
   | 'comparar-funis'
-  | 'comparacao'
   | 'roi'
   | 'custos'
   | 'insights'
+  | 'aquisicao'
+  | 'sdr'
   | 'exportar';
 
 export type ThemeName = 'dark' | 'light' | 'blue' | 'green' | 'purple';
