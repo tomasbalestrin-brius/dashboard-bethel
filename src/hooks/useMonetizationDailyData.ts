@@ -8,10 +8,10 @@ import type {
   AggregatedMonetizationData,
   PeriodData,
 } from '@/types/dailyData';
+import { formatDateForDB } from '@/types/dailyData';
 import {
   aggregateMonetizationData,
   validateMonetizationDailyData,
-  formatDateForDB,
 } from '@/utils/metricsCalculations';
 
 interface UseMonetizationDailyDataReturn {
