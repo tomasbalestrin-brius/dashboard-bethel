@@ -44,6 +44,9 @@ export function GoogleSheetsIntegrationModal({
     sheet_name: 'Sheet1',
     auto_sync: false,
     sync_frequency: 'manual' as SyncFrequency,
+    sync_direction: 'export' as 'export' | 'import' | 'both',
+    data_range: '',
+    has_header: true,
   });
 
   const handleChange = (field: string, value: any) => {
@@ -69,6 +72,9 @@ export function GoogleSheetsIntegrationModal({
       sheet_name: formData.sheet_name,
       auto_sync: formData.auto_sync,
       sync_frequency: formData.sync_frequency,
+      sync_direction: formData.sync_direction,
+      data_range: formData.data_range || undefined,
+      has_header: formData.has_header,
     });
 
     if (integration) {
@@ -87,6 +93,9 @@ export function GoogleSheetsIntegrationModal({
       sheet_name: 'Sheet1',
       auto_sync: false,
       sync_frequency: 'manual',
+      sync_direction: 'export',
+      data_range: '',
+      has_header: true,
     });
     onClose();
   };
@@ -147,7 +156,7 @@ export function GoogleSheetsIntegrationModal({
         return (
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">Passo 2: Selecionar Planilha</h3>
+              <h3 className="text-xl font-semibold">Passo 1: Selecionar Planilha</h3>
               <p className="text-muted-foreground">
                 Informe a planilha do Google Sheets onde os dados serão sincronizados.
               </p>
@@ -155,7 +164,7 @@ export function GoogleSheetsIntegrationModal({
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="spreadsheet-url">URL ou ID da Planilha *</Label>
+                <Label htmlFor="spreadsheet-url">URL da Planilha Google Sheets *</Label>
                 <Input
                   id="spreadsheet-url"
                   placeholder="https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit"
@@ -163,22 +172,35 @@ export function GoogleSheetsIntegrationModal({
                   onChange={(e) => handleSpreadsheetInput(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Cole a URL completa ou apenas o ID da planilha
+                  Cole a URL completa da sua planilha Google Sheets
                 </p>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg space-y-2">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  📋 Como preparar sua planilha:
+                </p>
+                <ol className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-decimal list-inside">
+                  <li>Abra sua planilha no Google Sheets</li>
+                  <li>Clique em <strong>"Compartilhar"</strong></li>
+                  <li>Selecione <strong>"Qualquer pessoa com o link"</strong></li>
+                  <li>Defina permissão como <strong>"Editor"</strong> (para exportar dados)</li>
+                  <li>Copie a URL e cole aqui</li>
+                </ol>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="spreadsheet-name">Nome da Planilha (opcional)</Label>
                 <Input
                   id="spreadsheet-name"
-                  placeholder="Ex: Relatório de Vendas"
+                  placeholder="Ex: Dados Monetização"
                   value={formData.spreadsheet_name}
                   onChange={(e) => handleChange('spreadsheet_name', e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sheet-name">Nome da Aba</Label>
+                <Label htmlFor="sheet-name">Nome da Aba *</Label>
                 <Input
                   id="sheet-name"
                   placeholder="Sheet1"
@@ -186,19 +208,19 @@ export function GoogleSheetsIntegrationModal({
                   onChange={(e) => handleChange('sheet_name', e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Nome da aba onde os dados serão inseridos
+                  Nome da aba onde os dados serão lidos/escritos
                 </p>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <Button onClick={() => setCurrentStep('authorize')} variant="outline" className="flex-1">
+              <Button onClick={() => setCurrentStep('welcome')} variant="outline" className="flex-1">
                 Voltar
               </Button>
               <Button
                 onClick={() => setCurrentStep('configure')}
                 className="flex-1"
-                disabled={!formData.spreadsheet_id}
+                disabled={!formData.spreadsheet_id || !formData.sheet_name}
               >
                 Continuar
               </Button>
@@ -210,13 +232,70 @@ export function GoogleSheetsIntegrationModal({
         return (
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">Passo 3: Configurar Sincronização</h3>
+              <h3 className="text-xl font-semibold">Passo 2: Configurar Dados</h3>
               <p className="text-muted-foreground">
-                Defina como e quando os dados devem ser sincronizados.
+                Defina quais dados exportar e importar da planilha.
               </p>
             </div>
 
             <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-primary" />
+                    <Label className="text-base font-semibold">Direção dos Dados</Label>
+                  </div>
+
+                  <Select
+                    value={formData.sync_direction || 'export'}
+                    onValueChange={(value) => handleChange('sync_direction', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="export">
+                        📤 Exportar (Sistema → Google Sheets)
+                      </SelectItem>
+                      <SelectItem value="import">
+                        📥 Importar (Google Sheets → Sistema)
+                      </SelectItem>
+                      <SelectItem value="both">
+                        🔄 Ambos (Exportar e Importar)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                  <Label className="text-base font-semibold">Intervalo de Dados na Planilha</Label>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Ex: A1:Z1000 ou Sheet1!A:Z"
+                      value={formData.data_range || ''}
+                      onChange={(e) => handleChange('data_range', e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Especifique o intervalo de células (ex: A1:E100). Deixe vazio para usar a aba inteira.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                  <Label className="text-base font-semibold">Primeira Linha é Cabeçalho?</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="has-header"
+                      checked={formData.has_header !== false}
+                      onCheckedChange={(checked) => handleChange('has_header', checked)}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Sim, a primeira linha contém nomes das colunas
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <div className="space-y-0.5">
                   <Label htmlFor="auto-sync" className="text-base">Sincronização Automática</Label>
@@ -253,8 +332,8 @@ export function GoogleSheetsIntegrationModal({
 
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  💡 <strong>Dica:</strong> Você poderá sincronizar manualmente a qualquer momento,
-                  independente desta configuração.
+                  💡 <strong>Dica:</strong> Você poderá sincronizar manualmente a qualquer momento.
+                  O sistema vai {formData.sync_direction === 'export' ? 'enviar' : formData.sync_direction === 'import' ? 'buscar' : 'enviar e buscar'} dados conforme configurado.
                 </p>
               </div>
             </div>
