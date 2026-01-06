@@ -40,7 +40,7 @@ export function GoogleSheetsIntegrationModal({
   moduleName,
   onComplete,
 }: GoogleSheetsIntegrationModalProps) {
-  const { createIntegration, loading } = useGoogleSheets(moduleName);
+  const { createIntegration, addFieldMappings, currentIntegration, loading } = useGoogleSheets(moduleName);
 
   // Hooks for funnels (conditionally used based on module)
   const acquisitionFunnels = useAcquisitionFunnels();
@@ -79,6 +79,28 @@ export function GoogleSheetsIntegrationModal({
   const moduleHasFunnels = () => {
     return moduleName === 'aquisicao' || moduleName === 'sdr';
   };
+
+  // Check if integration already exists for this module
+  useEffect(() => {
+    if (isOpen && currentIntegration && moduleHasFunnels()) {
+      // Se já tem integração e o módulo tem funis, vai direto para seleção de funil
+      setCurrentStep('select-funnel');
+      // Preenche os dados da integração existente
+      setFormData((prev) => ({
+        ...prev,
+        spreadsheet_id: currentIntegration.spreadsheet_id,
+        spreadsheet_name: currentIntegration.spreadsheet_name || '',
+        sheet_name: currentIntegration.sheet_name || 'Sheet1',
+        auto_sync: currentIntegration.auto_sync,
+        sync_frequency: currentIntegration.sync_frequency,
+        sync_direction: currentIntegration.sync_direction || 'export',
+        data_range: currentIntegration.data_range || '',
+        has_header: currentIntegration.has_header ?? true,
+      }));
+    } else if (isOpen) {
+      setCurrentStep('welcome');
+    }
+  }, [isOpen, currentIntegration]);
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -147,6 +169,9 @@ export function GoogleSheetsIntegrationModal({
         }));
         setIsCreatingNewFunnel(false);
         setNewFunnelName('');
+
+        // Ir direto para o mapeamento após criar funil
+        setCurrentStep('map-fields');
       }
     } finally {
       setCreatingFunnel(false);
@@ -154,23 +179,38 @@ export function GoogleSheetsIntegrationModal({
   };
 
   const handleComplete = async () => {
-    const integration = await createIntegration({
-      module_name: moduleName,
-      spreadsheet_id: formData.spreadsheet_id,
-      spreadsheet_name: formData.spreadsheet_name || undefined,
-      sheet_name: formData.sheet_name,
-      auto_sync: formData.auto_sync,
-      sync_frequency: formData.sync_frequency,
-      sync_direction: formData.sync_direction,
-      data_range: formData.data_range || undefined,
-      has_header: formData.has_header,
-      field_mappings: formData.field_mappings,
-    });
+    // Se já existe integração, apenas adiciona os mapeamentos do novo funil
+    if (currentIntegration) {
+      console.log('📋 Integração já existe, adicionando mapeamentos para o funil:', formData.funnel_name);
+      const success = await addFieldMappings(currentIntegration.id, formData.field_mappings);
 
-    if (integration) {
-      setCurrentStep('complete');
-      if (onComplete) {
-        onComplete();
+      if (success) {
+        setCurrentStep('complete');
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    } else {
+      // Se não existe integração, cria uma nova com os mapeamentos
+      console.log('🆕 Criando nova integração');
+      const integration = await createIntegration({
+        module_name: moduleName,
+        spreadsheet_id: formData.spreadsheet_id,
+        spreadsheet_name: formData.spreadsheet_name || undefined,
+        sheet_name: formData.sheet_name,
+        auto_sync: formData.auto_sync,
+        sync_frequency: formData.sync_frequency,
+        sync_direction: formData.sync_direction,
+        data_range: formData.data_range || undefined,
+        has_header: formData.has_header,
+        field_mappings: formData.field_mappings,
+      });
+
+      if (integration) {
+        setCurrentStep('complete');
+        if (onComplete) {
+          onComplete();
+        }
       }
     }
   };
@@ -472,10 +512,21 @@ export function GoogleSheetsIntegrationModal({
                   <Target className="w-8 h-8 text-primary" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold">Passo 3: Selecionar Funil</h3>
+              <h3 className="text-xl font-semibold">
+                {currentIntegration ? 'Selecionar Funil' : 'Passo 3: Selecionar Funil'}
+              </h3>
               <p className="text-muted-foreground">
-                Escolha o funil para o qual você quer configurar os mapeamentos de dados
+                {currentIntegration
+                  ? 'Selecione um funil existente ou crie um novo para configurar'
+                  : 'Escolha o funil para o qual você quer configurar os mapeamentos de dados'
+                }
               </p>
+              {currentIntegration && (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-sm">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Integração já configurada com Google Sheets
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
