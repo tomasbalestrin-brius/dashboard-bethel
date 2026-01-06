@@ -414,6 +414,54 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
     }
   };
 
+  // Adicionar mapeamentos a uma integração existente (para novo funil)
+  const addFieldMappings = async (integrationId: string, mappings: any[]) => {
+    try {
+      setLoading(true);
+
+      if (!mappings || mappings.length === 0) {
+        console.log('⚠️ Nenhum mapeamento para adicionar');
+        return true;
+      }
+
+      console.log('📋 Adicionando', mappings.length, 'mapeamentos à integração', integrationId);
+
+      const mappingsToInsert = mappings.map((mapping) => ({
+        integration_id: integrationId,
+        ...mapping,
+      }));
+
+      const { error: mappingsError } = await supabase
+        .from('google_sheets_field_mappings')
+        .insert(mappingsToInsert);
+
+      if (mappingsError) {
+        console.error('❌ Erro ao adicionar mapeamentos:', mappingsError);
+        throw mappingsError;
+      }
+
+      console.log('✅ Mapeamentos adicionados com sucesso');
+
+      toast({
+        title: 'Configuração salva',
+        description: 'Mapeamentos do funil salvos com sucesso',
+      });
+
+      return true;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erro ao salvar mapeamentos';
+      console.error('❌ addFieldMappings - Erro:', errorMessage, err);
+      toast({
+        title: 'Erro',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     integrations,
     currentIntegration,
@@ -428,6 +476,7 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
     handleOAuthCallback,
     syncToGoogleSheets,
     fetchSyncHistory,
+    addFieldMappings,
     refreshIntegrations: fetchIntegrations,
   };
 }
