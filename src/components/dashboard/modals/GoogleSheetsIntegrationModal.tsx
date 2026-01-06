@@ -35,7 +35,7 @@ export function GoogleSheetsIntegrationModal({
   moduleName,
   onComplete,
 }: GoogleSheetsIntegrationModalProps) {
-  const { createIntegration, initiateOAuthFlow, loading } = useGoogleSheets(moduleName);
+  const { createIntegration, loading } = useGoogleSheets(moduleName);
 
   const [currentStep, setCurrentStep] = useState<GoogleSheetsSetupStep>('welcome');
   const [formData, setFormData] = useState({
@@ -48,12 +48,6 @@ export function GoogleSheetsIntegrationModal({
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAuthorize = async () => {
-    const authUrl = await initiateOAuthFlow(moduleName);
-    window.open(authUrl, '_blank', 'width=600,height=700');
-    setCurrentStep('select-spreadsheet');
   };
 
   const extractSpreadsheetId = (url: string): string => {
@@ -142,44 +136,8 @@ export function GoogleSheetsIntegrationModal({
             </div>
 
             <div className="pt-4">
-              <Button onClick={() => setCurrentStep('authorize')} className="w-full" size="lg">
+              <Button onClick={() => setCurrentStep('select-spreadsheet')} className="w-full" size="lg">
                 Começar Integração
-              </Button>
-            </div>
-          </div>
-        );
-
-      case 'authorize':
-        return (
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">Passo 1: Autorizar Acesso</h3>
-              <p className="text-muted-foreground">
-                Você será redirecionado para autorizar o acesso à sua conta Google.
-              </p>
-            </div>
-
-            <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-medium">Instruções:</h4>
-              <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
-                <li>Clique no botão "Autorizar com Google" abaixo</li>
-                <li>Faça login com sua conta Google (se necessário)</li>
-                <li>Permita o acesso ao Google Sheets</li>
-                <li>Aguarde o redirecionamento de volta para esta página</li>
-              </ol>
-            </div>
-
-            <div className="flex gap-3">
-              <Button onClick={() => setCurrentStep('welcome')} variant="outline" className="flex-1">
-                Voltar
-              </Button>
-              <Button onClick={handleAuthorize} className="flex-1">
-                <img
-                  src="https://www.google.com/favicon.ico"
-                  alt="Google"
-                  className="w-4 h-4 mr-2"
-                />
-                Autorizar com Google
               </Button>
             </div>
           </div>
