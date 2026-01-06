@@ -3,6 +3,7 @@ import { ModuleName } from './dashboard';
 export type SyncFrequency = 'manual' | 'hourly' | 'daily' | 'weekly';
 export type SyncStatus = 'success' | 'failed' | 'partial';
 export type SyncType = 'manual' | 'automatic';
+export type SyncDirection = 'export' | 'import' | 'both';
 
 export interface GoogleSheetsIntegration {
   id: string;
@@ -15,7 +16,7 @@ export interface GoogleSheetsIntegration {
   spreadsheet_name?: string;
   sheet_name?: string;
 
-  // OAuth credentials
+  // OAuth credentials (não usado mais, mas mantido para compatibilidade)
   access_token?: string;
   refresh_token?: string;
   token_expiry?: string;
@@ -23,6 +24,9 @@ export interface GoogleSheetsIntegration {
   // Sync settings
   auto_sync: boolean;
   sync_frequency: SyncFrequency;
+  sync_direction?: SyncDirection;
+  data_range?: string;
+  has_header?: boolean;
   last_synced_at?: string;
 
   // Metadata
@@ -53,6 +57,9 @@ export interface GoogleSheetsIntegrationInput {
   sheet_name?: string;
   auto_sync?: boolean;
   sync_frequency?: SyncFrequency;
+  sync_direction?: SyncDirection;
+  data_range?: string;
+  has_header?: boolean;
 }
 
 export interface GoogleSheetsAuthResponse {
@@ -132,6 +139,11 @@ export const MODULE_SYNC_CONFIGS: Record<ModuleName, ModuleSyncConfig | null> = 
   'sdr': {
     module_name: 'sdr',
     headers: ['Data', 'Funil SDR', 'Classificação', 'Leads', 'Agendamentos', 'Calls', 'Vendas', 'Taxa Agendamento %', 'Taxa Comparecimento %', 'Taxa Conversão %'],
+    formatData: (data: any) => [data]
+  },
+  'monetizacao': {
+    module_name: 'monetizacao',
+    headers: ['Data', 'Receita Bruta', 'Receita Líquida', 'Custos Operacionais', 'Margem Bruta', 'Margem Líquida', 'ROI %'],
     formatData: (data: any) => [data]
   },
   'roi': {
