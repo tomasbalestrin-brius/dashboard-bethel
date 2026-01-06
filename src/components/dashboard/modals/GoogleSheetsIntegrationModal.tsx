@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,8 +17,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
-import { CheckCircle2, FileSpreadsheet, Settings, Sparkles } from 'lucide-react';
+import { useAcquisitionFunnels } from '@/hooks/useAcquisitionFunnels';
+import { useSDRFunnels } from '@/hooks/useSDRFunnels';
+import { CheckCircle2, FileSpreadsheet, Settings, Sparkles, Target, Plus } from 'lucide-react';
 import type { ModuleName } from '@/types/dashboard';
 import type { GoogleSheetsSetupStep, SyncFrequency, CardFieldMapping } from '@/types/googleSheets';
 import { MODULE_CARDS } from '@/types/googleSheets';
@@ -39,6 +42,10 @@ export function GoogleSheetsIntegrationModal({
 }: GoogleSheetsIntegrationModalProps) {
   const { createIntegration, loading } = useGoogleSheets(moduleName);
 
+  // Hooks for funnels (conditionally used based on module)
+  const acquisitionFunnels = useAcquisitionFunnels();
+  const sdrFunnels = useSDRFunnels();
+
   const [currentStep, setCurrentStep] = useState<GoogleSheetsSetupStep>('welcome');
   const [formData, setFormData] = useState({
     spreadsheet_id: '',
@@ -49,8 +56,29 @@ export function GoogleSheetsIntegrationModal({
     sync_direction: 'export' as 'export' | 'import' | 'both',
     data_range: '',
     has_header: true,
+    funnel_id: '',
+    funnel_name: '',
     field_mappings: [] as CardFieldMapping[],
   });
+
+  const [isCreatingNewFunnel, setIsCreatingNewFunnel] = useState(false);
+  const [newFunnelName, setNewFunnelName] = useState('');
+  const [creatingFunnel, setCreatingFunnel] = useState(false);
+
+  // Get the appropriate funnels based on module
+  const getModuleFunnels = () => {
+    if (moduleName === 'aquisicao') {
+      return acquisitionFunnels.funnels;
+    } else if (moduleName === 'sdr') {
+      return sdrFunnels.funnels;
+    }
+    return [];
+  };
+
+  // Check if module supports funnels
+  const moduleHasFunnels = () => {
+    return moduleName === 'aquisicao' || moduleName === 'sdr';
+  };
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -61,10 +89,17 @@ export function GoogleSheetsIntegrationModal({
       const existingIndex = prev.field_mappings.findIndex((m) => m.card_id === cardId);
       const newMappings = [...prev.field_mappings];
 
+      // Adicionar funnel_id e funnel_name ao mapeamento
+      const mappingWithFunnel = {
+        ...mapping,
+        funnel_id: prev.funnel_id || undefined,
+        funnel_name: prev.funnel_name || undefined,
+      };
+
       if (existingIndex >= 0) {
-        newMappings[existingIndex] = mapping;
+        newMappings[existingIndex] = mappingWithFunnel;
       } else {
-        newMappings.push(mapping);
+        newMappings.push(mappingWithFunnel);
       }
 
       return { ...prev, field_mappings: newMappings };
@@ -82,6 +117,40 @@ export function GoogleSheetsIntegrationModal({
   const handleSpreadsheetInput = (value: string) => {
     const id = extractSpreadsheetId(value);
     handleChange('spreadsheet_id', id);
+  };
+
+  // Handler for creating a new funnel
+  const handleCreateFunnel = async () => {
+    if (!newFunnelName.trim()) return;
+
+    setCreatingFunnel(true);
+    try {
+      let result;
+      if (moduleName === 'aquisicao') {
+        result = await acquisitionFunnels.createFunnel({
+          name: newFunnelName.trim(),
+          is_active: true,
+        });
+      } else if (moduleName === 'sdr') {
+        result = await sdrFunnels.createFunnel({
+          name: newFunnelName.trim(),
+          is_active: true,
+        });
+      }
+
+      if (result?.success && result.data) {
+        // Set the newly created funnel as selected
+        setFormData((prev) => ({
+          ...prev,
+          funnel_id: result.data.id,
+          funnel_name: result.data.name,
+        }));
+        setIsCreatingNewFunnel(false);
+        setNewFunnelName('');
+      }
+    } finally {
+      setCreatingFunnel(false);
+    }
   };
 
   const handleComplete = async () => {
@@ -117,8 +186,12 @@ export function GoogleSheetsIntegrationModal({
       sync_direction: 'export',
       data_range: '',
       has_header: true,
+      funnel_id: '',
+      funnel_name: '',
       field_mappings: [],
     });
+    setIsCreatingNewFunnel(false);
+    setNewFunnelName('');
     onClose();
   };
 
@@ -366,9 +439,14 @@ export function GoogleSheetsIntegrationModal({
               </Button>
               <Button
                 onClick={() => {
-                  // Se escolheu import ou both, vai para mapeamento
+                  // Se escolheu import ou both, vai para seleção de funil ou mapeamento
                   if (formData.sync_direction === 'import' || formData.sync_direction === 'both') {
-                    setCurrentStep('map-fields');
+                    // Se o módulo tem funis, vai para seleção de funil primeiro
+                    if (moduleHasFunnels()) {
+                      setCurrentStep('select-funnel');
+                    } else {
+                      setCurrentStep('map-fields');
+                    }
                   } else {
                     // Se é só export, vai direto para concluir
                     handleComplete();
@@ -383,16 +461,169 @@ export function GoogleSheetsIntegrationModal({
           </div>
         );
 
+      case 'select-funnel':
+        const moduleFunnels = getModuleFunnels();
+
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center mb-2">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Target className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold">Passo 3: Selecionar Funil</h3>
+              <p className="text-muted-foreground">
+                Escolha o funil para o qual você quer configurar os mapeamentos de dados
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {!isCreatingNewFunnel ? (
+                <>
+                  {moduleFunnels.length > 0 ? (
+                    <div className="space-y-3">
+                      <Label>Selecione um funil existente:</Label>
+                      <RadioGroup
+                        value={formData.funnel_id}
+                        onValueChange={(value) => {
+                          const selectedFunnel = moduleFunnels.find((f) => f.id === value);
+                          if (selectedFunnel) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              funnel_id: selectedFunnel.id,
+                              funnel_name: selectedFunnel.name,
+                            }));
+                          }
+                        }}
+                      >
+                        <div className="space-y-2">
+                          {moduleFunnels.map((funnel) => (
+                            <div
+                              key={funnel.id}
+                              className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                            >
+                              <RadioGroupItem value={funnel.id} id={funnel.id} />
+                              <Label
+                                htmlFor={funnel.id}
+                                className="flex-1 cursor-pointer font-normal"
+                              >
+                                <div className="font-medium">{funnel.name}</div>
+                                {funnel.description && (
+                                  <div className="text-sm text-muted-foreground">
+                                    {funnel.description}
+                                  </div>
+                                )}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center border-2 border-dashed rounded-lg">
+                      <p className="text-muted-foreground mb-2">
+                        Nenhum funil encontrado
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Crie um novo funil para começar
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">ou</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setIsCreatingNewFunnel(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Novo Funil
+                  </Button>
+                </>
+              ) : (
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-funnel-name">Nome do Novo Funil *</Label>
+                    <Input
+                      id="new-funnel-name"
+                      placeholder="Ex: Campanha Facebook, Tráfego Orgânico..."
+                      value={newFunnelName}
+                      onChange={(e) => setNewFunnelName(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsCreatingNewFunnel(false);
+                        setNewFunnelName('');
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      onClick={handleCreateFunnel}
+                      disabled={!newFunnelName.trim() || creatingFunnel}
+                    >
+                      {creatingFunnel ? 'Criando...' : 'Criar Funil'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                💡 <strong>Dica:</strong> Você poderá configurar células diferentes para cada funil.
+                Por exemplo, Funil A pode puxar dados da célula B5, e Funil B da célula B10.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button onClick={() => setCurrentStep('configure')} variant="outline" className="flex-1">
+                Voltar
+              </Button>
+              <Button
+                onClick={() => setCurrentStep('map-fields')}
+                className="flex-1"
+                disabled={!formData.funnel_id}
+              >
+                Continuar para Mapeamento
+              </Button>
+            </div>
+          </div>
+        );
+
       case 'map-fields':
         const moduleCards = getModuleCards();
 
         return (
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">Passo 3: Mapear Dados</h3>
+              <h3 className="text-xl font-semibold">
+                {moduleHasFunnels() ? 'Passo 4: Mapear Dados' : 'Passo 3: Mapear Dados'}
+              </h3>
               <p className="text-muted-foreground">
                 Configure de onde cada métrica/card virá na planilha
               </p>
+              {formData.funnel_name && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                  <Target className="w-4 h-4" />
+                  Configurando: {formData.funnel_name}
+                </div>
+              )}
             </div>
 
             {moduleCards.length === 0 ? (
@@ -431,7 +662,11 @@ export function GoogleSheetsIntegrationModal({
                 </div>
 
                 <div className="flex gap-3">
-                  <Button onClick={() => setCurrentStep('configure')} variant="outline" className="flex-1">
+                  <Button
+                    onClick={() => setCurrentStep(moduleHasFunnels() ? 'select-funnel' : 'configure')}
+                    variant="outline"
+                    className="flex-1"
+                  >
                     Voltar
                   </Button>
                   <Button onClick={handleComplete} className="flex-1" disabled={loading}>

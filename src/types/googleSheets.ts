@@ -69,6 +69,8 @@ export interface GoogleSheetsIntegrationInput {
 export interface CardFieldMapping {
   card_id: string;
   card_name: string;
+  funnel_id?: string; // ID do funil (opcional)
+  funnel_name?: string; // Nome do funil para referência
   source_type: 'cell' | 'range' | 'formula';
   source_value: string; // Ex: "B5", "D10:D50", "=(E10/E11)*100"
   aggregation: AggregationType;
@@ -82,6 +84,8 @@ export interface GoogleSheetsFieldMapping {
   integration_id: string;
   card_id: string;
   card_name: string;
+  funnel_id?: string;
+  funnel_name?: string;
   source_type: 'cell' | 'range' | 'formula';
   source_value: string;
   aggregation: AggregationType;
@@ -128,6 +132,7 @@ export type GoogleSheetsSetupStep =
   | 'authorize'
   | 'select-spreadsheet'
   | 'configure'
+  | 'select-funnel'
   | 'map-fields'
   | 'complete';
 
