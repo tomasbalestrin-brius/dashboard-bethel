@@ -20,7 +20,9 @@ import { Switch } from '@/components/ui/switch';
 import { useGoogleSheets } from '@/hooks/useGoogleSheets';
 import { CheckCircle2, FileSpreadsheet, Settings, Sparkles } from 'lucide-react';
 import type { ModuleName } from '@/types/dashboard';
-import type { GoogleSheetsSetupStep, SyncFrequency } from '@/types/googleSheets';
+import type { GoogleSheetsSetupStep, SyncFrequency, CardFieldMapping } from '@/types/googleSheets';
+import { MODULE_CARDS } from '@/types/googleSheets';
+import { CardFieldMappingConfig } from '@/components/dashboard/CardFieldMappingConfig';
 
 interface GoogleSheetsIntegrationModalProps {
   isOpen: boolean;
@@ -47,11 +49,29 @@ export function GoogleSheetsIntegrationModal({
     sync_direction: 'export' as 'export' | 'import' | 'both',
     data_range: '',
     has_header: true,
+    field_mappings: [] as CardFieldMapping[],
   });
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const handleFieldMappingChange = (cardId: string, mapping: CardFieldMapping) => {
+    setFormData((prev) => {
+      const existingIndex = prev.field_mappings.findIndex((m) => m.card_id === cardId);
+      const newMappings = [...prev.field_mappings];
+
+      if (existingIndex >= 0) {
+        newMappings[existingIndex] = mapping;
+      } else {
+        newMappings.push(mapping);
+      }
+
+      return { ...prev, field_mappings: newMappings };
+    });
+  };
+
+  const getModuleCards = () => MODULE_CARDS[moduleName] || [];
 
   const extractSpreadsheetId = (url: string): string => {
     // Extract ID from URL like: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
@@ -75,6 +95,7 @@ export function GoogleSheetsIntegrationModal({
       sync_direction: formData.sync_direction,
       data_range: formData.data_range || undefined,
       has_header: formData.has_header,
+      field_mappings: formData.field_mappings,
     });
 
     if (integration) {
@@ -96,6 +117,7 @@ export function GoogleSheetsIntegrationModal({
       sync_direction: 'export',
       data_range: '',
       has_header: true,
+      field_mappings: [],
     });
     onClose();
   };
@@ -342,10 +364,82 @@ export function GoogleSheetsIntegrationModal({
               <Button onClick={() => setCurrentStep('select-spreadsheet')} variant="outline" className="flex-1">
                 Voltar
               </Button>
-              <Button onClick={handleComplete} className="flex-1" disabled={loading}>
-                {loading ? 'Criando...' : 'Concluir Integração'}
+              <Button
+                onClick={() => {
+                  // Se escolheu import ou both, vai para mapeamento
+                  if (formData.sync_direction === 'import' || formData.sync_direction === 'both') {
+                    setCurrentStep('map-fields');
+                  } else {
+                    // Se é só export, vai direto para concluir
+                    handleComplete();
+                  }
+                }}
+                className="flex-1"
+                disabled={loading}
+              >
+                Continuar
               </Button>
             </div>
+          </div>
+        );
+
+      case 'map-fields':
+        const moduleCards = getModuleCards();
+
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-semibold">Passo 3: Mapear Dados</h3>
+              <p className="text-muted-foreground">
+                Configure de onde cada métrica/card virá na planilha
+              </p>
+            </div>
+
+            {moduleCards.length === 0 ? (
+              <div className="p-8 text-center space-y-2">
+                <p className="text-muted-foreground">
+                  Este módulo não possui cards configuráveis.
+                </p>
+                <Button onClick={handleComplete} disabled={loading}>
+                  Continuar sem Mapeamento
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2">
+                  {moduleCards.map((card) => {
+                    const existingMapping = formData.field_mappings.find(
+                      (m) => m.card_id === card.id
+                    );
+
+                    return (
+                      <CardFieldMappingConfig
+                        key={card.id}
+                        card={card}
+                        mapping={existingMapping || null}
+                        onChange={(mapping) => handleFieldMappingChange(card.id, mapping)}
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    💡 <strong>Dica:</strong> Você pode deixar cards em branco se não quiser importar dados para eles.
+                    Apenas os cards com origem configurada terão dados importados.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button onClick={() => setCurrentStep('configure')} variant="outline" className="flex-1">
+                    Voltar
+                  </Button>
+                  <Button onClick={handleComplete} className="flex-1" disabled={loading}>
+                    {loading ? 'Criando...' : 'Concluir Integração'}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         );
 
