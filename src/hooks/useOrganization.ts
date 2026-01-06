@@ -422,6 +422,7 @@ export const useOrganization = () => {
   };
 
   return {
+    user,
     organization,
     members,
     userRole,
