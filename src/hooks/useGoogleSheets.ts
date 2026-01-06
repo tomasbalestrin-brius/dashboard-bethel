@@ -117,12 +117,15 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
       setLoading(true);
       console.log('📤 createIntegration - Criando integração...', input);
 
+      // Separar field_mappings do input principal
+      const { field_mappings, ...integrationData } = input;
+
       const { data, error: insertError } = await supabase
         .from('google_sheets_integrations')
         .insert({
           organization_id: organization.id,
           created_by: user.id,
-          ...input,
+          ...integrationData,
         })
         .select()
         .maybeSingle();
@@ -137,6 +140,32 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
       }
 
       console.log('✅ createIntegration - Integração criada:', data);
+
+      // Salvar mapeamentos de campos, se houver
+      if (field_mappings && field_mappings.length > 0) {
+        console.log('📋 Salvando', field_mappings.length, 'mapeamentos de campos...');
+
+        const mappingsToInsert = field_mappings.map((mapping) => ({
+          integration_id: data.id,
+          ...mapping,
+        }));
+
+        const { error: mappingsError } = await supabase
+          .from('google_sheets_field_mappings')
+          .insert(mappingsToInsert);
+
+        if (mappingsError) {
+          console.error('❌ Erro ao salvar mapeamentos:', mappingsError);
+          // Não falhar completamente, apenas avisar
+          toast({
+            title: 'Aviso',
+            description: 'Integração criada, mas houve erro ao salvar mapeamentos de campos',
+            variant: 'destructive',
+          });
+        } else {
+          console.log('✅ Mapeamentos salvos com sucesso');
+        }
+      }
 
       toast({
         title: 'Integração criada',
