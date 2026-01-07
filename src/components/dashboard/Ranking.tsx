@@ -30,25 +30,25 @@ export function Ranking({ allData }: RankingProps) {
       title: '💎 Maior Faturamento',
       icon: '👑',
       key: 'totalFaturamento' as const,
-      format: (val: number) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      format: (val: number) => `R$ ${(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     },
     {
       title: '💎 Maior Lucro Tráfego',
       icon: '💎',
       key: 'totalLucroTrafego' as const,
-      format: (val: number) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      format: (val: number) => `R$ ${(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     },
     {
       title: '💎 Maior Lucro no Funil',
       icon: '🌟',
       key: 'totalLucroFunil' as const,
-      format: (val: number) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      format: (val: number) => `R$ ${(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     },
     {
       title: '🎁 Mais Vendas',
       icon: '🔥',
       key: 'totalVendas' as const,
-      format: (val: number) => `${val} vendas`,
+      format: (val: number) => `${val || 0} vendas`,
     },
   ];
 
