@@ -132,6 +132,7 @@ export type GoogleSheetsSetupStep =
   | 'authorize'
   | 'select-spreadsheet'
   | 'configure'
+  | 'manage-funnels'
   | 'select-funnel'
   | 'map-fields'
   | 'complete';

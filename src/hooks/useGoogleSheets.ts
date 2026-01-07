@@ -462,6 +462,70 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
     }
   };
 
+  // Buscar mapeamentos de uma integração
+  const getFieldMappings = async (integrationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('google_sheets_field_mappings')
+        .select('*')
+        .eq('integration_id', integrationId);
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (err: any) {
+      console.error('❌ Erro ao buscar mapeamentos:', err);
+      return [];
+    }
+  };
+
+  // Atualizar mapeamentos de um funil específico
+  const updateFieldMappings = async (integrationId: string, funnelId: string, mappings: any[]) => {
+    try {
+      setLoading(true);
+
+      // Deletar mapeamentos antigos do funil
+      const { error: deleteError } = await supabase
+        .from('google_sheets_field_mappings')
+        .delete()
+        .eq('integration_id', integrationId)
+        .eq('funnel_id', funnelId);
+
+      if (deleteError) throw deleteError;
+
+      // Inserir novos mapeamentos
+      if (mappings && mappings.length > 0) {
+        const mappingsToInsert = mappings.map((mapping) => ({
+          integration_id: integrationId,
+          ...mapping,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('google_sheets_field_mappings')
+          .insert(mappingsToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      toast({
+        title: 'Mapeamentos atualizados',
+        description: 'Configuração do funil atualizada com sucesso',
+      });
+
+      return true;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erro ao atualizar mapeamentos';
+      toast({
+        title: 'Erro',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     integrations,
     currentIntegration,
@@ -477,6 +541,8 @@ export function useGoogleSheets(moduleName?: ModuleName): UseGoogleSheetsReturn 
     syncToGoogleSheets,
     fetchSyncHistory,
     addFieldMappings,
+    getFieldMappings,
+    updateFieldMappings,
     refreshIntegrations: fetchIntegrations,
   };
 }
