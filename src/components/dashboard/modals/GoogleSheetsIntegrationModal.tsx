@@ -40,7 +40,7 @@ export function GoogleSheetsIntegrationModal({
   moduleName,
   onComplete,
 }: GoogleSheetsIntegrationModalProps) {
-  const { createIntegration, addFieldMappings, currentIntegration, loading } = useGoogleSheets(moduleName);
+  const { createIntegration, addFieldMappings, getFieldMappings, updateFieldMappings, currentIntegration, loading } = useGoogleSheets(moduleName);
 
   // Hooks for funnels (conditionally used based on module)
   const acquisitionFunnels = useAcquisitionFunnels();
@@ -64,6 +64,9 @@ export function GoogleSheetsIntegrationModal({
   const [isCreatingNewFunnel, setIsCreatingNewFunnel] = useState(false);
   const [newFunnelName, setNewFunnelName] = useState('');
   const [creatingFunnel, setCreatingFunnel] = useState(false);
+  const [existingMappings, setExistingMappings] = useState<any[]>([]);
+  const [loadingMappings, setLoadingMappings] = useState(false);
+  const [editingFunnelId, setEditingFunnelId] = useState<string | null>(null);
 
   // Get the appropriate funnels based on module
   const getModuleFunnels = () => {
@@ -83,8 +86,8 @@ export function GoogleSheetsIntegrationModal({
   // Check if integration already exists for this module
   useEffect(() => {
     if (isOpen && currentIntegration && moduleHasFunnels()) {
-      // Se já tem integração e o módulo tem funis, vai direto para seleção de funil
-      setCurrentStep('select-funnel');
+      // Se já tem integração e o módulo tem funis, vai para gerenciamento
+      setCurrentStep('manage-funnels');
       // Preenche os dados da integração existente
       setFormData((prev) => ({
         ...prev,
@@ -97,10 +100,23 @@ export function GoogleSheetsIntegrationModal({
         data_range: currentIntegration.data_range || '',
         has_header: currentIntegration.has_header ?? true,
       }));
+
+      // Buscar mapeamentos existentes
+      loadExistingMappings();
     } else if (isOpen) {
       setCurrentStep('welcome');
     }
   }, [isOpen, currentIntegration]);
+
+  // Carregar mapeamentos existentes
+  const loadExistingMappings = async () => {
+    if (!currentIntegration) return;
+
+    setLoadingMappings(true);
+    const mappings = await getFieldMappings(currentIntegration.id);
+    setExistingMappings(mappings);
+    setLoadingMappings(false);
+  };
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -166,9 +182,11 @@ export function GoogleSheetsIntegrationModal({
           ...prev,
           funnel_id: result.data.id,
           funnel_name: result.data.name,
+          field_mappings: [], // Limpa os mapeamentos para o novo funil
         }));
         setIsCreatingNewFunnel(false);
         setNewFunnelName('');
+        setEditingFunnelId(null);
 
         // Ir direto para o mapeamento após criar funil
         setCurrentStep('map-fields');
@@ -178,14 +196,56 @@ export function GoogleSheetsIntegrationModal({
     }
   };
 
+  // Handler for editing an existing funnel's mappings
+  const handleEditFunnel = (funnelId: string, funnelName: string) => {
+    // Buscar mapeamentos deste funil
+    const funnelMappings = existingMappings.filter((m) => m.funnel_id === funnelId);
+
+    // Preencher formData com os mapeamentos existentes
+    setFormData((prev) => ({
+      ...prev,
+      funnel_id: funnelId,
+      funnel_name: funnelName,
+      field_mappings: funnelMappings,
+    }));
+
+    setEditingFunnelId(funnelId);
+    setCurrentStep('map-fields');
+  };
+
   const handleComplete = async () => {
-    // Se já existe integração, apenas adiciona os mapeamentos do novo funil
+    // Se já existe integração
     if (currentIntegration) {
-      console.log('📋 Integração já existe, adicionando mapeamentos para o funil:', formData.funnel_name);
-      const success = await addFieldMappings(currentIntegration.id, formData.field_mappings);
+      let success;
+
+      // Se estamos editando um funil existente
+      if (editingFunnelId) {
+        console.log('✏️ Atualizando mapeamentos do funil:', formData.funnel_name);
+        success = await updateFieldMappings(
+          currentIntegration.id,
+          editingFunnelId,
+          formData.field_mappings
+        );
+      } else {
+        // Se é um novo funil, adiciona os mapeamentos
+        console.log('📋 Adicionando mapeamentos para novo funil:', formData.funnel_name);
+        success = await addFieldMappings(currentIntegration.id, formData.field_mappings);
+      }
 
       if (success) {
-        setCurrentStep('complete');
+        // Recarregar mapeamentos
+        await loadExistingMappings();
+        // Voltar para tela de gerenciamento
+        setCurrentStep('manage-funnels');
+        setEditingFunnelId(null);
+        // Limpar formData
+        setFormData((prev) => ({
+          ...prev,
+          funnel_id: '',
+          funnel_name: '',
+          field_mappings: [],
+        }));
+
         if (onComplete) {
           onComplete();
         }
@@ -501,8 +561,129 @@ export function GoogleSheetsIntegrationModal({
           </div>
         );
 
-      case 'select-funnel':
+      case 'manage-funnels':
         const moduleFunnels = getModuleFunnels();
+
+        // Agrupar mapeamentos por funil
+        const funnelMappingGroups = new Map<string, { funnelName: string; mappings: any[] }>();
+        existingMappings.forEach((mapping) => {
+          if (mapping.funnel_id) {
+            if (!funnelMappingGroups.has(mapping.funnel_id)) {
+              funnelMappingGroups.set(mapping.funnel_id, {
+                funnelName: mapping.funnel_name || 'Sem nome',
+                mappings: [],
+              });
+            }
+            funnelMappingGroups.get(mapping.funnel_id)!.mappings.push(mapping);
+          }
+        });
+
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center mb-2">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Settings className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold">Gerenciar Funis</h3>
+              <p className="text-muted-foreground">
+                Configure os mapeamentos de dados para cada funil
+              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-sm">
+                <FileSpreadsheet className="w-4 h-4" />
+                {currentIntegration?.spreadsheet_name || 'Google Sheets conectado'}
+              </div>
+            </div>
+
+            {loadingMappings ? (
+              <div className="p-8 text-center">
+                <p className="text-muted-foreground">Carregando mapeamentos...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {funnelMappingGroups.size > 0 ? (
+                  <div className="space-y-3">
+                    <Label>Funis Configurados:</Label>
+                    {Array.from(funnelMappingGroups.entries()).map(([funnelId, { funnelName, mappings }]) => {
+                      const funnel = moduleFunnels.find((f) => f.id === funnelId);
+                      return (
+                        <div
+                          key={funnelId}
+                          className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium">{funnelName}</div>
+                              <div className="text-sm text-muted-foreground mt-1">
+                                {mappings.length} {mappings.length === 1 ? 'card configurado' : 'cards configurados'}
+                              </div>
+                              {funnel?.description && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {funnel.description}
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditFunnel(funnelId, funnelName)}
+                            >
+                              Editar Mapeamentos
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-6 text-center border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground mb-2">
+                      Nenhum funil configurado ainda
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Crie um novo funil para começar a mapear dados
+                    </p>
+                  </div>
+                )}
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Adicionar</span>
+                  </div>
+                </div>
+
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={() => setCurrentStep('select-funnel')}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Configurar Novo Funil
+                </Button>
+              </div>
+            )}
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                💡 <strong>Dica:</strong> Cada funil pode ter células diferentes configuradas.
+                Por exemplo, Funil A pode usar célula B5, e Funil B célula B10.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button onClick={handleClose} variant="outline" className="flex-1">
+                Fechar
+              </Button>
+            </div>
+          </div>
+        );
+
+      case 'select-funnel':
+        const selectFunnels = getModuleFunnels();
 
         return (
           <div className="space-y-6">
@@ -513,20 +694,11 @@ export function GoogleSheetsIntegrationModal({
                 </div>
               </div>
               <h3 className="text-xl font-semibold">
-                {currentIntegration ? 'Selecionar Funil' : 'Passo 3: Selecionar Funil'}
+                Selecionar Funil
               </h3>
               <p className="text-muted-foreground">
-                {currentIntegration
-                  ? 'Selecione um funil existente ou crie um novo para configurar'
-                  : 'Escolha o funil para o qual você quer configurar os mapeamentos de dados'
-                }
+                Escolha o funil para o qual você quer configurar os mapeamentos de dados
               </p>
-              {currentIntegration && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-sm">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Integração já configurada com Google Sheets
-                </div>
-              )}
             </div>
 
             <div className="space-y-4">
@@ -643,7 +815,11 @@ export function GoogleSheetsIntegrationModal({
             </div>
 
             <div className="flex gap-3">
-              <Button onClick={() => setCurrentStep('configure')} variant="outline" className="flex-1">
+              <Button
+                onClick={() => setCurrentStep(currentIntegration ? 'manage-funnels' : 'configure')}
+                variant="outline"
+                className="flex-1"
+              >
                 Voltar
               </Button>
               <Button
