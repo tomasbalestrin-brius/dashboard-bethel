@@ -5,13 +5,13 @@ interface StatsPanelProps {
 }
 
 export function StatsPanel({ data }: StatsPanelProps) {
-  const { semanas, tendencia } = data;
+  const { semanas = [], tendencia } = data;
 
-  const totalFaturamentoTrafego = semanas.reduce((sum, s) => sum + s.faturamentoTrafego, 0);
-  const totalInvestido = semanas.reduce((sum, s) => sum + s.investido, 0);
-  const totalRoasTrafego = semanas.reduce((sum, s) => sum + s.roasTrafego, 0);
-  const totalVendaMonetizacao = semanas.reduce((sum, s) => sum + s.vendaMonetizacao, 0);
-  const totalEntradas = semanas.reduce((sum, s) => sum + s.entradas, 0);
+  const totalFaturamentoTrafego = semanas.reduce((sum, s) => sum + (s?.faturamentoTrafego || 0), 0);
+  const totalInvestido = semanas.reduce((sum, s) => sum + (s?.investido || 0), 0);
+  const totalRoasTrafego = semanas.reduce((sum, s) => sum + (s?.roasTrafego || 0), 0);
+  const totalVendaMonetizacao = semanas.reduce((sum, s) => sum + (s?.vendaMonetizacao || 0), 0);
+  const totalEntradas = semanas.reduce((sum, s) => sum + (s?.entradas || 0), 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 max-md:gap-2">{/* ... keep existing code */}
@@ -55,21 +55,21 @@ export function StatsPanel({ data }: StatsPanelProps) {
           <div className="flex justify-between items-center py-2 border-b border-[hsl(var(--border-color))] max-md:py-1.5">
             <span className="text-[hsl(var(--text-secondary))] text-sm font-semibold max-md:text-xs">💰 Faturamento Tráfego</span>
             <span className="text-[hsl(var(--text-primary))] text-lg font-extrabold max-md:text-base">
-              R$ {tendencia.faturamentoTrafego.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {(tendencia?.faturamentoTrafego || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center py-2 border-b border-[hsl(var(--border-color))] max-md:py-1.5">
             <span className="text-[hsl(var(--text-secondary))] text-sm font-semibold max-md:text-xs">💸 Investimento</span>
             <span className="text-[hsl(var(--text-primary))] text-lg font-extrabold max-md:text-base">
-              R$ {tendencia.investido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {(tendencia?.investido || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center py-2 max-md:py-1.5">
             <span className="text-[hsl(var(--text-secondary))] text-sm font-semibold max-md:text-xs">📊 Lucro Tráfego</span>
-            <span className={`text-lg font-extrabold max-md:text-base ${tendencia.roasTrafego >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--danger))]'}`}>
-              R$ {tendencia.roasTrafego.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            <span className={`text-lg font-extrabold max-md:text-base ${(tendencia?.roasTrafego || 0) >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--danger))]'}`}>
+              R$ {(tendencia?.roasTrafego || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>
@@ -108,14 +108,14 @@ export function StatsPanel({ data }: StatsPanelProps) {
           <div className="flex justify-between items-center py-2 border-b border-[hsl(var(--border-color))] max-md:py-1.5">
             <span className="text-[hsl(var(--text-secondary))] text-sm font-semibold max-md:text-xs">💳 Faturamento Monetização</span>
             <span className="text-[hsl(var(--text-primary))] text-lg font-extrabold max-md:text-base">
-              R$ {tendencia.vendaMonetizacao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {(tendencia?.vendaMonetizacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center py-2 max-md:py-1.5">
             <span className="text-[hsl(var(--text-secondary))] text-sm font-semibold max-md:text-xs">📥 Entradas</span>
             <span className="text-[hsl(var(--text-primary))] text-lg font-extrabold max-md:text-base">
-              R$ {tendencia.entradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {(tendencia?.entradas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </span>
           </div>
         </div>
